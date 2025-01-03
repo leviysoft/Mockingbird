@@ -2,89 +2,76 @@ package ru.tinkoff.tcb.mockingbird
 
 import java.util.Base64
 import scala.util.Try
-
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.numeric.*
 import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.KeyDecoder
 import io.circe.KeyEncoder
-import io.estatico.newtype.macros.newtype
-import io.estatico.newtype.ops.*
+import neotype.*
+import oolong.bson.{BsonDecoder, BsonEncoder, BsonKeyDecoder, BsonKeyEncoder}
+import oolong.bson.given
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.bson.BsonString
 import sttp.tapir.Schema
-
-import ru.tinkoff.tcb.bson.BsonDecoder
-import ru.tinkoff.tcb.bson.BsonEncoder
-import ru.tinkoff.tcb.bson.BsonKeyDecoder
-import ru.tinkoff.tcb.bson.BsonKeyEncoder
 import ru.tinkoff.tcb.generic.RootOptionFields
 import ru.tinkoff.tcb.utils.crypto.AES
 
 package object model {
-  @newtype class ByteArray private (val asArray: Array[Byte])
+  object ByteArray extends Newtype[Array[Byte]] {
+    implicit val byteArrayBsonEncoder: BsonEncoder[ByteArray.Type] =
+      BsonEncoder[Array[Byte]].beforeWrite(_.unwrap)
 
-  object ByteArray {
-    implicit val byteArrayBsonEncoder: BsonEncoder[ByteArray] =
-      BsonEncoder[Array[Byte]].coerce
+    implicit val byteArrayBsonDecoder: BsonDecoder[ByteArray.Type] =
+      BsonDecoder[Array[Byte]].afterRead(this.unsafeMake)
 
-    implicit val byteArrayBsonDecoder: BsonDecoder[ByteArray] =
-      BsonDecoder[Array[Byte]].coerce
+    implicit val byteArraySchema: Schema[ByteArray.Type] =
+      Schema.schemaForString.as[ByteArray.Type].format("base64")
 
-    implicit val byteArraySchema: Schema[ByteArray] =
-      Schema.schemaForString.as[ByteArray].format("base64")
+    implicit val byteArrayDecoder: Decoder[ByteArray.Type] =
+      Decoder.decodeString.emapTry(s => Try(Base64.getDecoder.decode(s))).map(this.unsafeMake)
 
-    implicit val byteArrayDecoder: Decoder[ByteArray] =
-      Decoder.decodeString.emapTry(s => Try(Base64.getDecoder.decode(s))).map(_.coerce)
+    implicit val byteArrayEncoder: Encoder[ByteArray.Type] =
+      Encoder.encodeString.contramap(ba => Base64.getEncoder.encodeToString(ba.unwrap))
 
-    implicit val byteArrayEncoder: Encoder[ByteArray] =
-      Encoder.encodeString.contramap(ba => Base64.getEncoder.encodeToString(ba.asArray))
-
-    implicit val byteArrayRof: RootOptionFields[ByteArray] = RootOptionFields.mk(Set.empty)
+    implicit val byteArrayRof: RootOptionFields[ByteArray.Type] = RootOptionFields.mk(Set.empty)
   }
 
-  @newtype class FieldNumber private (val asInt: Int)
+  object FieldNumber extends Newtype[Int] {
+    implicit val fieldNumberSchema: Schema[FieldNumber.Type] =
+      Schema.schemaForInt.as[FieldNumber.Type]
 
-  object FieldNumber {
-    implicit val fieldNumberSchema: Schema[FieldNumber] =
-      Schema.schemaForInt.as[FieldNumber]
+    implicit val fieldNumberEncoder: Encoder[FieldNumber.Type] =
+      Encoder[Int].contramap(_.unwrap)
 
-    implicit val fieldNumberEncoder: Encoder[FieldNumber] =
-      Encoder[Int].coerce
+    implicit val fieldNumberDecoder: Decoder[FieldNumber.Type] =
+      Decoder[Int].map(unsafeMake)
 
-    implicit val fieldNumberDecoer: Decoder[FieldNumber] =
-      Decoder[Int].coerce
+    implicit val fieldNumberBsonEncoder: BsonEncoder[FieldNumber.Type] =
+      BsonEncoder[Int].beforeWrite(_.unwrap)
 
-    implicit val fieldNumberBsonEncoder: BsonEncoder[FieldNumber] =
-      BsonEncoder[Int].coerce
-
-    implicit val fieldNumberBsonDecoder: BsonDecoder[FieldNumber] =
-      BsonDecoder[Int].coerce
+    implicit val fieldNumberBsonDecoder: BsonDecoder[FieldNumber.Type] =
+      BsonDecoder[Int].afterRead(unsafeMake)
   }
 
-  @newtype class FieldName private (val asString: String)
+  object FieldName extends Newtype[String] {
+    implicit val fieldNameKeyEncoder: KeyEncoder[FieldName.Type] =
+      KeyEncoder[String].contramap(_.unwrap)
 
-  object FieldName {
-    implicit val fieldNameKeyEncoder: KeyEncoder[FieldName] =
-      KeyEncoder[String].coerce
+    implicit val fieldNameKeyDecoder: KeyDecoder[FieldName.Type] =
+      KeyDecoder[String].map(unsafeMake)
 
-    implicit val fieldNameKeyDecoder: KeyDecoder[FieldName] =
-      KeyDecoder[String].coerce
+    implicit val fieldNameBsonKeyEncoder: BsonKeyEncoder[FieldName.Type] =
+      (t: FieldName.Type) => t.unwrap
 
-    implicit val fieldNameBsonKeyEncoder: BsonKeyEncoder[FieldName] =
-      (t: FieldName) => t.asString
-
-    implicit val fieldNameBsonKeyDecoder: BsonKeyDecoder[FieldName] =
-      (value: String) => Try(value.coerce[FieldName])
+    implicit val fieldNameBsonKeyDecoder: BsonKeyDecoder[FieldName.Type] =
+      (value: String) => Try(unsafeMake(value))
   }
 
-  @newtype class SecureString private (val asString: String)
-
-  object SecureString {
-    implicit def secureStringBsonEncoder(implicit aes: AES): BsonEncoder[SecureString] =
-      (value: SecureString) => {
-        val (data, salt, iv) = aes.encrypt(value.asString)
+  object SecureString extends Newtype[String] {
+    implicit def secureStringBsonEncoder(implicit aes: AES): BsonEncoder[SecureString.Type] =
+      (value: SecureString.Type) => {
+        val (data, salt, iv) = aes.encrypt(value.unwrap)
 
         BsonDocument(
           "d" -> BsonString(data),
@@ -93,25 +80,25 @@ package object model {
         )
       }
 
-    implicit def secureStringBsonDecoder(implicit aes: AES): BsonDecoder[SecureString] =
-      BsonDecoder.ofDocument[SecureString] { doc =>
+    implicit def secureStringBsonDecoder(implicit aes: AES): BsonDecoder[SecureString.Type] =
+      BsonDecoder.ofDocument[SecureString.Type] { doc =>
         (
           Try(doc.getString("d")),
           Try(doc.getString("s")),
           Try(doc.getString("i"))
-        ).mapN { case (data, salt, iv) => aes.decrypt(data.getValue, salt.getValue, iv.getValue).coerce }
+        ).mapN { case (data, salt, iv) => unsafeMake(aes.decrypt(data.getValue, salt.getValue, iv.getValue)) }
       }
 
-    implicit val secureStringSchema: Schema[SecureString] =
-      Schema.schemaForString.as[SecureString]
+    implicit val secureStringSchema: Schema[SecureString.Type] =
+      Schema.schemaForString.as[SecureString.Type]
 
-    implicit val secureStringDecoder: Decoder[SecureString] =
-      Decoder.decodeString.coerce
+    implicit val secureStringDecoder: Decoder[SecureString.Type] =
+      Decoder.decodeString.map(this.unsafeMake)
 
-    implicit val secureStringEncoder: Encoder[SecureString] =
-      Encoder.encodeString.coerce
+    implicit val secureStringEncoder: Encoder[SecureString.Type] =
+      Encoder.encodeString.contramap(_.unwrap)
 
-    implicit val secureStringRof: RootOptionFields[SecureString] = RootOptionFields.mk(Set.empty)
+    implicit val secureStringRof: RootOptionFields[SecureString.Type] = RootOptionFields.mk(Set.empty)
   }
 
   type HttpStatusCodeRange = Interval.ClosedOpen[100, 600]

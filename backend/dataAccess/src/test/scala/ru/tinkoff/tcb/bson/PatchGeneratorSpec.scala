@@ -1,15 +1,13 @@
 package ru.tinkoff.tcb.bson
 
-import derevo.derive
 import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-import ru.tinkoff.tcb.bson.derivation.bsonDecoder
-import ru.tinkoff.tcb.bson.derivation.bsonEncoder
+import oolong.bson.*
+import oolong.bson.given
 
-@derive(bsonEncoder, bsonDecoder)
-final case class TestEntity(_id: String, name: String, externalKey: Option[Int])
+final case class TestEntity(_id: String, name: String, externalKey: Option[Int]) derives BsonDecoder, BsonEncoder
 
 class PatchGeneratorSpec extends AnyFunSuite with Matchers {
   test("Generate update with Some") {

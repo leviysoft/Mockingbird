@@ -1,8 +1,7 @@
 package ru.tinkoff.tcb.bson.enumeratum
 
 import enumeratum.*
-
-import ru.tinkoff.tcb.bson.*
+import oolong.bson.{BsonDecoder, BsonEncoder}
 
 trait BsonEnum[A <: EnumEntry] { self: Enum[A] =>
   implicit val bsonEncoder: BsonEncoder[A] =

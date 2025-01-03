@@ -2,17 +2,17 @@ package ru.tinkoff.tcb.mockingbird.api.request
 
 import scala.util.matching.Regex
 
-import derevo.circe.decoder
-import derevo.circe.encoder
-import derevo.derive
 import eu.timepit.refined.*
-import eu.timepit.refined.types.numeric.NonNegInt
+import eu.timepit.refined.numeric.*
+import eu.timepit.refined.types.numeric.*
 import eu.timepit.refined.types.string.NonEmptyString
+import io.circe.Decoder
+import io.circe.Encoder
 import io.circe.Json
 import io.circe.refined.*
 import sttp.tapir.Schema.annotations.description
 import sttp.tapir.codec.refined.*
-import sttp.tapir.derevo.schema
+import sttp.tapir.Schema
 
 import ru.tinkoff.tcb.generic.PropSubset
 import ru.tinkoff.tcb.mockingbird.model.Callback
@@ -26,12 +26,11 @@ import ru.tinkoff.tcb.protocol.json.*
 import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.circe.optics.JsonOptic
 
-@derive(encoder, decoder, schema)
 final case class CreateStubRequest(
     @description("Scope")
     scope: Scope,
     @description("The number of possible triggers. Only relevant for scope=countdown")
-    times: Option[NonNegInt] = Some(refineMV(1)),
+    times: Option[NonNegInt] = Some(refineV[NonNegative].unsafeFrom(1)),
     @description("Mock name")
     name: NonEmptyString,
     @description("HTTP method")
@@ -52,7 +51,8 @@ final case class CreateStubRequest(
     callback: Option[Callback],
     @description("Tags")
     labels: Seq[String] = Seq.empty
-)
+) derives Decoder, Encoder, Schema
+
 object CreateStubRequest {
   implicitly[PropSubset[CreateStubRequest, HttpStub]]
 }

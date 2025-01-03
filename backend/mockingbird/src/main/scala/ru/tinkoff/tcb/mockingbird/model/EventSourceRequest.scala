@@ -1,36 +1,30 @@
 package ru.tinkoff.tcb.mockingbird.model
 
-import derevo.circe.decoder
-import derevo.circe.encoder
-import derevo.derive
-import sttp.tapir.derevo.schema
-
-import ru.tinkoff.tcb.bson.BsonDecoder
-import ru.tinkoff.tcb.bson.BsonEncoder
-import ru.tinkoff.tcb.bson.derivation.DerivedDecoder
-import ru.tinkoff.tcb.bson.derivation.DerivedEncoder
+import io.circe.{Decoder, Encoder}
+import oolong.bson.*
+import oolong.bson.given
 import ru.tinkoff.tcb.protocol.bson.*
 import ru.tinkoff.tcb.protocol.json.*
 import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.circe.optics.JsonOptic
 import ru.tinkoff.tcb.utils.crypto.AES
+import sttp.tapir.Schema
 
-@derive(decoder, encoder, schema)
 final case class EventSourceRequest(
-    url: SecureString,
+    url: SecureString.Type,
     method: HttpMethod,
-    headers: Map[String, SecureString],
-    body: Option[SecureString],
+    headers: Map[String, SecureString.Type],
+    body: Option[SecureString.Type],
     jenumerate: Option[JsonOptic],
     jextract: Option[JsonOptic],
     bypassCodes: Option[Set[Int]],
     jstringdecode: Boolean = false
-)
+) derives Decoder, Encoder, Schema
 
 object EventSourceRequest {
   implicit def eventSourceRequestBsonEncoder(implicit aes: AES): BsonEncoder[EventSourceRequest] =
-    DerivedEncoder.genBsonEncoder[EventSourceRequest]
+    BsonEncoder.derived
 
   implicit def eventSourceRequestBsonDecoder(implicit aes: AES): BsonDecoder[EventSourceRequest] =
-    DerivedDecoder.genBsonDecoder[EventSourceRequest]
+    BsonDecoder.derived
 }

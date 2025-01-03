@@ -35,7 +35,7 @@ object schema {
   implicit val finiteDurationSchema: Schema[FiniteDuration] =
     Schema.schemaForString
       .validate(Validator.pattern(pattern))
-      .map(s => Try(Duration(s).pipe(d => FiniteDuration(d._1, d._2))).toOption)(_.toString())
+      .map(s => Try(Duration(s).pipe { case Duration(len, unit) => FiniteDuration(len, unit)}).toOption)(_.toString())
 
   implicit def mapSchema[K, V](implicit underlying: Schema[V]): Schema[Map[K, V]] =
     Schema(SchemaType.SOpenProduct(Nil, underlying)(_ => Map()))

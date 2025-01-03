@@ -8,9 +8,9 @@ import com.github.os72.protobuf.dynamic.MessageDefinition
 import com.google.protobuf.DescriptorProtos
 import com.google.protobuf.DynamicMessage
 import com.google.protobuf.util.JsonFormat
+import neotype.*
 import io.circe.Json
 import io.circe.parser.*
-import io.estatico.newtype.ops.*
 import mouse.boolean.*
 import mouse.ignore
 import org.apache.commons.io.output.ByteArrayOutputStream
@@ -81,13 +81,13 @@ object GrpcExractor {
   def buildEnumDefinition(ge: GrpcEnumSchema): EnumDefinition =
     ge.values
       .foldLeft(EnumDefinition.newBuilder(ge.name)) { case (builder, (name, number)) =>
-        builder.addValue(name.asString, number.asInt)
+        builder.addValue(name.unwrap, number.unwrap)
       }
       .build()
 
   private val jsonPrinter = JsonFormat.printer().preservingProtoFieldNames().includingDefaultValueFields()
 
-  implicit class FromGrpcProtoDefinition(private val definition: GrpcProtoDefinition) extends AnyVal {
+  extension (definition: GrpcProtoDefinition) {
     def toDynamicSchema: DynamicSchema = {
       val registryBuilder: DynamicSchema.Builder = DynamicSchema.newBuilder()
       val messageSchemas                         = definition.schemas
@@ -118,7 +118,7 @@ object GrpcExractor {
       } yield js
   }
 
-  implicit class FromDynamicSchema(private val dynamicSchema: DynamicSchema) extends AnyVal {
+  extension (dynamicSchema: DynamicSchema) {
     def toGrpcProtoDefinition: GrpcProtoDefinition = {
       val descriptor: DescriptorProtos.FileDescriptorProto = dynamicSchema.getFileDescriptorSet.getFile(0)
       val namespace                                        = descriptor.hasPackage.option(descriptor.getPackage)
@@ -138,7 +138,7 @@ object GrpcExractor {
   private def enum2enumScheme(enumProto: DescriptorProtos.EnumDescriptorProto): GrpcEnumSchema =
     GrpcEnumSchema(
       enumProto.getName,
-      enumProto.getValueList.asScala.map(i => (i.getName.coerce[FieldName], i.getNumber.coerce[FieldNumber])).toMap
+      enumProto.getValueList.asScala.map(i => (FieldName(i.getName), FieldNumber(i.getNumber))).toMap
     )
 
   private def message2messageSchema(message: DescriptorProtos.DescriptorProto): GrpcMessageSchema = {

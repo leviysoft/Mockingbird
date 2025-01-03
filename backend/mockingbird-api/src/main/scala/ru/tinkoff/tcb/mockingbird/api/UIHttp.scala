@@ -26,7 +26,7 @@ class UIHttp {
       .zServerLogic[WLD](_ => ZIO.succeed(json"""{"version": ${BuildInfo.version}}"""))
 
   private val staticEndpoint: ZServerEndpoint[WLD, Any] =
-    staticResourcesGetServerEndpoint[RIO[WLD, *]]("mockingbird" / "assets")(this.getClass.getClassLoader, "out/assets")
+    staticResourcesGetServerEndpoint[[X] =>> RIO[WLD, X]]("mockingbird" / "assets")(this.getClass.getClassLoader, "out/assets")
 
   private val indexEndpoint: ZServerEndpoint[WLD, Any] =
     resourcesGetServerEndpoint2("mockingbird")(

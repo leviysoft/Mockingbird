@@ -1,26 +1,20 @@
 package ru.tinkoff.tcb.mockingbird.model
 
 import java.time.Instant
-
 import cats.data.NonEmptyVector
-import derevo.circe.decoder
-import derevo.circe.encoder
-import derevo.derive
-import sttp.tapir.derevo.schema
-
-import ru.tinkoff.tcb.bson.BsonDecoder
-import ru.tinkoff.tcb.bson.BsonEncoder
-import ru.tinkoff.tcb.bson.annotation.BsonKey
-import ru.tinkoff.tcb.bson.derivation.DerivedDecoder
-import ru.tinkoff.tcb.bson.derivation.DerivedEncoder
+import io.circe.{Decoder, Encoder}
+import oolong.bson.*
+import oolong.bson.given
+import oolong.bson.meta.QueryMeta
+import oolong.bson.meta.queryMeta
 import ru.tinkoff.tcb.protocol.bson.*
 import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.crypto.AES
 import ru.tinkoff.tcb.utils.id.SID
+import sttp.tapir.Schema
 
-@derive(encoder, decoder, schema)
 final case class SourceConfiguration(
-    @BsonKey("_id") name: SID[SourceConfiguration],
+    name: SID[SourceConfiguration],
     created: Instant,
     description: String,
     service: String,
@@ -28,12 +22,14 @@ final case class SourceConfiguration(
     init: Option[NonEmptyVector[ResourceRequest]],
     shutdown: Option[NonEmptyVector[ResourceRequest]],
     reInitTriggers: Option[NonEmptyVector[ResponseSpec]]
-)
+) derives Decoder, Encoder, Schema
 
 object SourceConfiguration {
+  inline given QueryMeta[SourceConfiguration] = queryMeta(_.name -> "_id")
+
   implicit def sourceConfigurationBsonEncoder(implicit aes: AES): BsonEncoder[SourceConfiguration] =
-    DerivedEncoder.genBsonEncoder[SourceConfiguration]
+    BsonEncoder.derived
 
   implicit def sourceConfigurationBsonDecoder(implicit aes: AES): BsonDecoder[SourceConfiguration] =
-    DerivedDecoder.genBsonDecoder[SourceConfiguration]
+    BsonDecoder.derived
 }

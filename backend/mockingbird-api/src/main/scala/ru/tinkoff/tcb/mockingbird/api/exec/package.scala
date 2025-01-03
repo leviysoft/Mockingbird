@@ -39,7 +39,7 @@ package object exec {
     }
 
   private val nocontentVariant =
-    oneOfVariantValueMatcher(emptyOutputAs[HttpStubResponse](EmptyResponse(refineMV(204), Map.empty, None))) {
+    oneOfVariantValueMatcher(emptyOutputAs[HttpStubResponse](EmptyResponse(refineV.unsafeFrom(204), Map.empty, None))) {
       case StubCode(rc) if codesWithoutContent.contains(rc) =>
         true
     }

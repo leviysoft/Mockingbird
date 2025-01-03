@@ -3,7 +3,7 @@ package ru.tinkoff.tcb.mockingbird.dal
 import scala.annotation.implicitNotFound
 import scala.util.matching.Regex
 
-import cats.tagless.autoFunctorK
+import oolong.bson.given
 import org.mongodb.scala.MongoCollection
 import org.mongodb.scala.bson.BsonDocument
 
@@ -12,7 +12,6 @@ import ru.tinkoff.tcb.mongo.DAOBase
 import ru.tinkoff.tcb.mongo.MongoDAO
 
 @implicitNotFound("Could not find an instance of ServiceDAO for ${F}")
-@autoFunctorK
 trait ServiceDAO[F[_]] extends MongoDAO[F, Service] {
   def getServiceFor(path: String): F[Option[Service]]
   def getServiceFor(pattern: Regex): F[Option[Service]]

@@ -1,10 +1,7 @@
 package ru.tinkoff.tcb.dataaccess
 
-import cats.tagless.autoFunctorK
-
 import ru.tinkoff.tcb.generic.RootOptionFields
 
-@autoFunctorK
 trait DAO[F[_], T] {
   type Query
   type Patch

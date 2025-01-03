@@ -6,16 +6,16 @@ import eu.timepit.refined.numeric.*
 import io.circe.Json
 import io.circe.ParsingFailure
 import mouse.option.*
+import oolong.dsl.*
+import oolong.mongo.*
 import zio.interop.catz.core.*
 
-import ru.tinkoff.tcb.criteria.*
-import ru.tinkoff.tcb.criteria.Typed.*
 import ru.tinkoff.tcb.logging.MDCLogging
 import ru.tinkoff.tcb.mockingbird.api.WLD
 import ru.tinkoff.tcb.mockingbird.dal.GrpcStubDAO
 import ru.tinkoff.tcb.mockingbird.dal.PersistentStateDAO
 import ru.tinkoff.tcb.mockingbird.error.StubSearchError
-import ru.tinkoff.tcb.mockingbird.grpc.GrpcExractor.FromGrpcProtoDefinition
+import ru.tinkoff.tcb.mockingbird.grpc.GrpcExractor.convertMessageToJson
 import ru.tinkoff.tcb.mockingbird.misc.Renderable.ops.*
 import ru.tinkoff.tcb.mockingbird.model.GrpcMethodDescription
 import ru.tinkoff.tcb.mockingbird.model.GrpcStub
@@ -59,9 +59,9 @@ class GrpcStubResolverImpl(
   ): RIO[WLD, Option[(GrpcStub, Json, Option[PersistentState])]] = for {
     stubs <- stubDAO
       .findChunk(
-        prop[GrpcStub](_.methodDescriptionId) === methodDescriptionId &&
-          prop[GrpcStub](_.scope) === scope &&
-          prop[GrpcStub](_.times) > Option(refineMV[NonNegative](0)),
+        query[GrpcStub](gs =>
+          gs.methodDescriptionId == lift(methodDescriptionId) && gs.scope == lift(scope) && gs.times.!! > 0
+        ),
         0,
         Integer.MAX_VALUE
       )

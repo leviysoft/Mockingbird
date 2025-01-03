@@ -2,20 +2,23 @@ package ru.tinkoff.tcb.mockingbird.api.request
 
 import scala.util.matching.Regex
 
-import derevo.circe.decoder
-import derevo.circe.encoder
-import derevo.derive
+import io.circe.Decoder
+import io.circe.Encoder
 import eu.timepit.refined.*
+import eu.timepit.refined.numeric.*
 import eu.timepit.refined.types.numeric.NonNegInt
 import eu.timepit.refined.types.string.NonEmptyString
 import io.circe.Json
 import io.circe.refined.*
+import oolong.bson.*
+import oolong.bson.given
+import oolong.bson.refined.given
+import oolong.bson.meta.QueryMeta
+import oolong.bson.meta.queryMeta
 import sttp.tapir.Schema.annotations.description
 import sttp.tapir.codec.refined.*
-import sttp.tapir.derevo.schema
+import sttp.tapir.Schema
 
-import ru.tinkoff.tcb.bson.annotation.BsonKey
-import ru.tinkoff.tcb.bson.derivation.bsonEncoder
 import ru.tinkoff.tcb.circe.bson.*
 import ru.tinkoff.tcb.generic.PropSubset
 import ru.tinkoff.tcb.mockingbird.model.Callback
@@ -31,12 +34,11 @@ import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.circe.optics.JsonOptic
 import ru.tinkoff.tcb.utils.id.SID
 
-@derive(decoder, encoder, schema)
 final case class UpdateStubRequest(
     @description("Scope")
     scope: Scope,
     @description("The number of possible triggers. Only relevant for scope=countdown")
-    times: Option[NonNegInt] = Some(refineMV(1)),
+    times: Option[NonNegInt] = Some(refineV[NonNegative].unsafeFrom(1)),
     @description("Mock name")
     name: NonEmptyString,
     @description("HTTP method")
@@ -57,14 +59,13 @@ final case class UpdateStubRequest(
     callback: Option[Callback],
     @description("Tags")
     labels: Seq[String]
-)
+) derives Decoder, Encoder, Schema
 object UpdateStubRequest {
   implicitly[PropSubset[UpdateStubRequest, StubPatch]]
 }
 
-@derive(bsonEncoder)
 final case class StubPatch(
-    @BsonKey("_id") id: SID[HttpStub],
+    id: SID[HttpStub],
     scope: Scope,
     times: Option[NonNegInt],
     name: NonEmptyString,
@@ -78,4 +79,10 @@ final case class StubPatch(
     response: HttpStubResponse,
     callback: Option[Callback],
     labels: Seq[String]
-)
+) derives BsonEncoder
+
+object StubPatch {
+  inline given QueryMeta[StubPatch  ] = queryMeta(_.id -> "_id")
+
+  implicitly[PropSubset[StubPatch, HttpStub]]
+}

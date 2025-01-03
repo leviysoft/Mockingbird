@@ -2,28 +2,26 @@ package ru.tinkoff.tcb.mockingbird.model
 
 import java.time.Instant
 
-import derevo.circe.decoder
-import derevo.circe.encoder
-import derevo.derive
 import eu.timepit.refined.types.string.NonEmptyString
+import io.circe.{Decoder, Encoder}
 import io.circe.refined.*
-import io.estatico.newtype.macros.newtype
-import io.estatico.newtype.ops.*
-import io.scalaland.chimney.dsl.TransformationOps
+import io.scalaland.chimney.dsl.*
+import neotype.*
+import oolong.bson.*
+import oolong.bson.given
+import oolong.bson.refined.given
+import oolong.bson.meta.QueryMeta
+import oolong.bson.meta.queryMeta
 import sttp.tapir.codec.refined.*
-import sttp.tapir.derevo.schema
+import sttp.tapir.Schema
 
-import ru.tinkoff.tcb.bson.annotation.BsonKey
-import ru.tinkoff.tcb.bson.derivation.bsonDecoder
-import ru.tinkoff.tcb.bson.derivation.bsonEncoder
 import ru.tinkoff.tcb.mockingbird.api.request.CreateGrpcStubRequest
 import ru.tinkoff.tcb.mockingbird.error.ValidationError
 import ru.tinkoff.tcb.protocol.bson.*
 import ru.tinkoff.tcb.utils.id.SID
 
-@derive(bsonDecoder, bsonEncoder, decoder, encoder, schema)
 final case class GrpcMethodDescription(
-    @BsonKey("_id") id: SID[GrpcMethodDescription],
+    id: SID[GrpcMethodDescription],
     description: String,
     created: Instant,
     service: NonEmptyString,
@@ -34,12 +32,14 @@ final case class GrpcMethodDescription(
     requestSchema: GrpcProtoDefinition,
     responseClass: String,
     responseSchema: GrpcProtoDefinition
-)
+) derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema
 
 object GrpcMethodDescription {
+  inline given QueryMeta[GrpcMethodDescription] = queryMeta(_.id -> "_id")
+
   def getRootFields(
-      name: NormalizedTypeName,
-      types: Map[NormalizedTypeName, GrpcRootMessage] = Map.empty
+      name: NormalizedTypeName.Type,
+      types: Map[NormalizedTypeName.Type, GrpcRootMessage] = Map.empty
   ): IO[ValidationError, List[GrpcField]] =
     for {
       rootMessage <- ZIO.getOrFailWith(ValidationError(Vector(s"Root message '${name}' not found")))(
@@ -73,30 +73,28 @@ object GrpcMethodDescription {
       .transform
   }
 
-  @newtype class PackagePrefix private (val asString: String) {
-    def :+(nested: String): PackagePrefix =
-      (asString ++ nested.dropWhile(_ == '.') ++ ".").coerce
-
-    def resolve(n: String): NormalizedTypeName =
-      if (n.startsWith(".")) NormalizedTypeName(n)
-      else if (n.startsWith(asString.drop(1))) NormalizedTypeName(s".$n")
-      else NormalizedTypeName(s"$asString$n")
+  object PackagePrefix extends Newtype[String] {
+    def fromProtoDef(definition: GrpcProtoDefinition): PackagePrefix.Type =
+      this.unsafeMake(definition.`package`.map(p => s".$p.").getOrElse("."))
   }
 
-  object PackagePrefix {
-    def apply(definition: GrpcProtoDefinition): PackagePrefix =
-      definition.`package`.map(p => s".$p.").getOrElse(".").coerce
+  extension (pp: PackagePrefix.Type) {
+    def :+(nested: String): PackagePrefix.Type =
+      PackagePrefix(pp.unwrap ++ nested.dropWhile(_ == '.') ++ ".")
+
+    def resolve(n: String): NormalizedTypeName.Type =
+      if (n.startsWith(".")) NormalizedTypeName.fromString(n)
+      else if (n.startsWith(pp.unwrap.drop(1))) NormalizedTypeName.fromString(s".$n")
+      else NormalizedTypeName.fromString(s"${pp.unwrap}$n")
   }
 
-  @newtype class NormalizedTypeName private (val asString: String)
-
-  object NormalizedTypeName {
-    def apply(name: String): NormalizedTypeName =
-      s".${name.dropWhile(_ == '.')}".coerce
+  object NormalizedTypeName extends Newtype[String] {
+    def fromString(name: String): NormalizedTypeName.Type =
+      this.unsafeMake(s".${name.dropWhile(_ == '.')}")
   }
 
-  def makeDictTypes(p: PackagePrefix, ms: Seq[GrpcRootMessage]): Vector[(NormalizedTypeName, GrpcRootMessage)] =
-    ms.foldLeft(Vector.empty[(NormalizedTypeName, GrpcRootMessage)]) {
+  def makeDictTypes(p: PackagePrefix.Type , ms: Seq[GrpcRootMessage]): Vector[(NormalizedTypeName.Type, GrpcRootMessage)] =
+    ms.foldLeft(Vector.empty[(NormalizedTypeName.Type, GrpcRootMessage)]) {
       case (b, m @ GrpcMessageSchema(name, _, _, nested, nestedEnums)) =>
         (b :+ (p.resolve(name) -> m)) ++
           makeDictTypes(p :+ name, nested.getOrElse(Nil)) ++

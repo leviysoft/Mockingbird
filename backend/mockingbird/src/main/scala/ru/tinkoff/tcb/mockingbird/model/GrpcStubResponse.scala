@@ -1,40 +1,31 @@
 package ru.tinkoff.tcb.mockingbird.model
 
 import scala.concurrent.duration.FiniteDuration
-
 import com.github.dwickern.macros.NameOf.*
-import derevo.circe.decoder
-import derevo.circe.encoder
-import derevo.derive
 import eu.timepit.refined.types.numeric.PosInt
 import glass.Contains
 import glass.Subset
 import glass.macros.GenContains
 import glass.macros.GenSubset
+import io.circe.{Decoder, Encoder}
 import io.circe.Json
+import io.circe.derivation.Configuration as CirceConfig
 import io.circe.refined.*
+import oolong.bson.*
+import oolong.bson.annotation.BsonDiscriminator
+import oolong.bson.given
+import oolong.bson.refined.given
 import sttp.tapir.codec.refined.*
-import sttp.tapir.derevo.schema
+import sttp.tapir.Schema
 import sttp.tapir.generic.Configuration as TapirConfig
-
-import ru.tinkoff.tcb.bson.annotation.BsonDiscriminator
-import ru.tinkoff.tcb.bson.derivation.bsonDecoder
-import ru.tinkoff.tcb.bson.derivation.bsonEncoder
 import ru.tinkoff.tcb.circe.bson.*
 import ru.tinkoff.tcb.protocol.bson.*
 import ru.tinkoff.tcb.protocol.json.*
 import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.circe.optics.JsonOptic
 
-@derive(
-  bsonDecoder,
-  bsonEncoder,
-  decoder(GrpcStubResponse.modes, true, Some("mode")),
-  encoder(GrpcStubResponse.modes, Some("mode")),
-  schema
-)
 @BsonDiscriminator("mode")
-sealed trait GrpcStubResponse {
+sealed trait GrpcStubResponse derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema {
   def delay: Option[FiniteDuration]
 }
 
@@ -49,27 +40,26 @@ object GrpcStubResponse {
 
   implicit val customConfiguration: TapirConfig =
     TapirConfig.default.withDiscriminator("mode").copy(toEncodedName = modes)
+
+  given CirceConfig = CirceConfig(transformConstructorNames = modes).withDiscriminator("mode")
 }
 
-@derive(decoder, encoder)
 final case class FillResponse(
     data: Json,
     delay: Option[FiniteDuration]
-) extends GrpcStubResponse
+) extends GrpcStubResponse derives Decoder, Encoder
 
-@derive(decoder, encoder)
 final case class FillStreamResponse(
     data: Vector[Json],
     delay: Option[FiniteDuration],
     streamDelay: Option[FiniteDuration]
-) extends GrpcStubResponse
+) extends GrpcStubResponse derives Decoder, Encoder
 
-@derive(decoder, encoder)
 final case class GProxyResponse(
     endpoint: Option[String],
     patch: Map[JsonOptic, String],
     delay: Option[FiniteDuration]
-) extends GrpcStubResponse
+) extends GrpcStubResponse derives Decoder, Encoder
 
 object GProxyResponse {
   val prism: Subset[GrpcStubResponse, GProxyResponse] = GenSubset[GrpcStubResponse, GProxyResponse]
@@ -77,15 +67,13 @@ object GProxyResponse {
   val endpoint: Contains[GProxyResponse, Option[String]] = GenContains[GProxyResponse](_.endpoint)
 }
 
-@derive(decoder, encoder)
 final case class NoBodyResponse(
     delay: Option[FiniteDuration]
-) extends GrpcStubResponse
+) extends GrpcStubResponse derives Decoder, Encoder
 
-@derive(decoder, encoder)
 final case class RepeatResponse(
     data: Json,
     repeats: PosInt,
     delay: Option[FiniteDuration],
     streamDelay: Option[FiniteDuration]
-) extends GrpcStubResponse
+) extends GrpcStubResponse derives Decoder, Encoder

@@ -2,21 +2,21 @@ package ru.tinkoff.tcb.mockingbird.model
 
 import java.time.Instant
 
-import derevo.circe.decoder
-import derevo.circe.encoder
-import derevo.derive
 import eu.timepit.refined.types.numeric.NonNegInt
 import eu.timepit.refined.types.string.NonEmptyString
+import io.circe.Decoder
+import io.circe.Encoder
 import io.circe.Json
 import io.circe.refined.*
 import mouse.boolean.*
+import oolong.bson.*
+import oolong.bson.given
+import oolong.bson.refined.given
+import oolong.bson.meta.QueryMeta
+import oolong.bson.meta.queryMeta
 import sttp.tapir.codec.refined.*
-import sttp.tapir.derevo.schema
+import sttp.tapir.Schema
 
-import ru.tinkoff.tcb.bson.*
-import ru.tinkoff.tcb.bson.annotation.BsonKey
-import ru.tinkoff.tcb.bson.derivation.bsonDecoder
-import ru.tinkoff.tcb.bson.derivation.bsonEncoder
 import ru.tinkoff.tcb.circe.bson.*
 import ru.tinkoff.tcb.mockingbird.error.ValidationError
 import ru.tinkoff.tcb.mockingbird.grpc.GrpcExractor.primitiveTypes
@@ -30,13 +30,12 @@ import ru.tinkoff.tcb.utils.circe.optics.JsonOptic
 import ru.tinkoff.tcb.utils.id.SID
 import ru.tinkoff.tcb.validation.Rule
 
-@derive(bsonDecoder, bsonEncoder, decoder, encoder, schema)
 final case class GrpcStub(
-    @BsonKey("_id") id: SID[GrpcStub],
+    id: SID[GrpcStub],
     methodDescriptionId: SID[GrpcMethodDescription],
     scope: Scope,
     created: Instant,
-    times: Option[NonNegInt],
+    times: Option[Int],
     name: NonEmptyString,
     response: GrpcStubResponse,
     seed: Option[Json],
@@ -44,14 +43,16 @@ final case class GrpcStub(
     requestPredicates: JsonPredicate,
     persist: Option[Map[JsonOptic, Json]],
     labels: Seq[String]
-)
+) derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema
 
 object GrpcStub {
   private val indexRegex = "\\[([\\d]+)\\]".r
 
+  inline given QueryMeta[GrpcStub] = queryMeta(_.id -> "_id")
+
   def validateOptics(
       optic: JsonOptic,
-      types: Map[NormalizedTypeName, GrpcRootMessage],
+      types: Map[NormalizedTypeName.Type, GrpcRootMessage],
       rootFields: List[GrpcField]
   ): IO[ValidationError, Unit] = for {
     fields <- Ref.make(rootFields)
@@ -68,7 +69,7 @@ object GrpcStub {
           _ <-
             if (primitiveTypes.values.exists(_ == field.typeName)) fields.set(List.empty)
             else
-              types.get(NormalizedTypeName(field.typeName)) match {
+              types.get(NormalizedTypeName.fromString(field.typeName)) match {
                 case Some(message) =>
                   message match {
                     case GrpcMessageSchema(_, fs, oneofs, _, _) =>

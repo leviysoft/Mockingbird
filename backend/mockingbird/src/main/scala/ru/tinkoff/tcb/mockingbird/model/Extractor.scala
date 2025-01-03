@@ -1,34 +1,25 @@
 package ru.tinkoff.tcb.mockingbird.model
 
 import scala.xml.NodeSeq
-
 import com.github.dwickern.macros.NameOf.*
-import derevo.circe.decoder
-import derevo.circe.encoder
-import derevo.derive
+import io.circe.Decoder
+import io.circe.Encoder
 import io.circe.Json
+import io.circe.derivation.Configuration as CirceConfig
 import io.circe.parser.parse
-import sttp.tapir.derevo.schema
+import sttp.tapir.Schema
 import sttp.tapir.generic.Configuration as TapirConfig
-
-import ru.tinkoff.tcb.bson.annotation.BsonDiscriminator
-import ru.tinkoff.tcb.bson.derivation.bsonDecoder
-import ru.tinkoff.tcb.bson.derivation.bsonEncoder
+import oolong.bson.*
+import oolong.bson.annotation.BsonDiscriminator
+import oolong.bson.given
 import ru.tinkoff.tcb.protocol.bson.*
 import ru.tinkoff.tcb.protocol.json.*
 import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.circe.optics.JsonOptic
 import ru.tinkoff.tcb.xpath.SXpath
 
-@derive(
-  bsonDecoder,
-  bsonEncoder,
-  decoder(XmlExtractor.types, true, Some("type")),
-  encoder(XmlExtractor.types, Some("type")),
-  schema
-)
 @BsonDiscriminator("type")
-sealed trait XmlExtractor {
+sealed trait XmlExtractor derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema {
   def apply(node: NodeSeq): Option[Json]
 }
 object XmlExtractor {
@@ -38,6 +29,8 @@ object XmlExtractor {
 
   implicit val customConfiguration: TapirConfig =
     TapirConfig.default.withDiscriminator("type").copy(toEncodedName = types)
+
+  given CirceConfig = CirceConfig(transformConstructorNames = types).withDiscriminator("type")
 }
 
 /**
@@ -46,8 +39,7 @@ object XmlExtractor {
  * @param path
  *   Path inside CDATA
  */
-@derive(decoder, encoder)
-final case class JsonCDataExtractor(prefix: SXpath, path: JsonOptic) extends XmlExtractor {
+final case class JsonCDataExtractor(prefix: SXpath, path: JsonOptic) extends XmlExtractor derives Decoder, Encoder {
   def apply(node: NodeSeq): Option[Json] =
     prefix.toZoom
       .bind(node)

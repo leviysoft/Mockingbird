@@ -1,11 +1,10 @@
 package ru.tinkoff.tcb.mockingbird.api.request
 
 import cats.data.NonEmptyVector
-import derevo.circe.decoder
-import derevo.circe.encoder
-import derevo.derive
+import io.circe.Decoder
+import io.circe.Encoder
 import sttp.tapir.Schema.annotations.description
-import sttp.tapir.derevo.schema
+import sttp.tapir.Schema
 
 import ru.tinkoff.tcb.generic.PropSubset
 import ru.tinkoff.tcb.mockingbird.model.EventSourceRequest
@@ -14,7 +13,6 @@ import ru.tinkoff.tcb.mockingbird.model.ResponseSpec
 import ru.tinkoff.tcb.mockingbird.model.SourceConfiguration
 import ru.tinkoff.tcb.protocol.schema.*
 
-@derive(decoder, encoder, schema)
 final case class UpdateSourceConfigurationRequest(
     @description("Configuration description")
     description: String,
@@ -27,7 +25,7 @@ final case class UpdateSourceConfigurationRequest(
     shutdown: Option[NonEmptyVector[ResourceRequest]],
     @description("Reinitialization triggers specification")
     reInitTriggers: Option[NonEmptyVector[ResponseSpec]]
-)
+) derives Decoder, Encoder, Schema
 
 object UpdateSourceConfigurationRequest {
   implicitly[PropSubset[UpdateSourceConfigurationRequest, SourceConfiguration]]

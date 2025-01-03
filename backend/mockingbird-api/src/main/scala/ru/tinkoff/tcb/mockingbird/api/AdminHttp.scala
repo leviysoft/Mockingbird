@@ -123,7 +123,7 @@ final class AdminHttp(config: ServerConfig, handler: AdminApiHandler) {
         useRelativePaths = false,
         showExtensions = false
       )
-    ).fromEndpoints[RIO[WLD, *]](allEndpoints, "Mockingbird", BuildInfo.version)
+    ).fromEndpoints[[X] =>> RIO[WLD, X]](allEndpoints, "Mockingbird", BuildInfo.version)
 
   private val serverOptions =
     VertxZioServerOptions

@@ -76,7 +76,7 @@ object Dependencies {
   ).map("com.dimafeng" %% _ % "0.41.0" % Test)
 
   lazy val refined = Seq(
-    "eu.timepit" %% "refined" % "0.11.0"
+    "eu.timepit" %% "refined" % "0.11.3"
   )
 
   lazy val protobuf = Seq(
@@ -96,6 +96,13 @@ object Dependencies {
     "glass-core",
     "glass-macro",
   ).map("tf.tofu" %% _ % Versions.glass)
+
+  lazy val oolong = Seq(
+    "oolong-core",
+    "oolong-bson",
+    "oolong-bson-refined",
+    "oolong-mongo",
+  ).map("io.github.leviysoft" %% _ % "0.4.3")
 
   lazy val logback = Seq(
     "logback-core",

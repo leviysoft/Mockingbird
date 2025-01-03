@@ -7,10 +7,8 @@ import com.typesafe.config.Config
 import enumeratum.*
 import pureconfig.*
 import pureconfig.error.CannotConvert
-import pureconfig.generic.ProductHint
-import pureconfig.generic.auto.*
 
-final case class JsSandboxConfig(allowedClasses: Set[String] = Set())
+final case class JsSandboxConfig(allowedClasses: Set[String] = Set()) derives ConfigReader
 
 final case class ServerConfig(
     interface: String,
@@ -19,11 +17,11 @@ final case class ServerConfig(
     healthCheckRoute: Option[String],
     sandbox: JsSandboxConfig = JsSandboxConfig(),
     vertx: Config
-)
+) derives ConfigReader
 
-final case class SecurityConfig(secret: String)
+final case class SecurityConfig(secret: String) derives ConfigReader
 
-final case class ProxyServerAuth(user: String, password: String)
+final case class ProxyServerAuth(user: String, password: String) derives ConfigReader
 
 sealed trait ProxyServerType extends EnumEntry
 object ProxyServerType extends Enum[ProxyServerType] with PureconfigEnum[ProxyServerType] {
@@ -39,7 +37,7 @@ final case class ProxyServerConfig(
     nonProxy: Seq[String] = Seq(),
     onlyProxy: Seq[String] = Seq(),
     auth: Option[ProxyServerAuth]
-)
+) derives ConfigReader
 
 sealed trait HttpVersion extends EnumEntry
 object HttpVersion extends Enum[HttpVersion] {
@@ -65,11 +63,11 @@ final case class ProxyConfig(
     logOutgoingRequests: Boolean,
     disableAutoDecompressForRaw: Boolean,
     httpVersion: HttpVersion
-)
+) derives ConfigReader
 
-final case class EventConfig(fetchInterval: FiniteDuration, reloadInterval: FiniteDuration)
+final case class EventConfig(fetchInterval: FiniteDuration, reloadInterval: FiniteDuration) derives ConfigReader
 
-final case class MongoConfig(uri: String, collections: MongoCollections)
+final case class MongoConfig(uri: String, collections: MongoCollections) derives ConfigReader
 
 final case class MongoCollections(
     stub: String,
@@ -81,13 +79,13 @@ final case class MongoCollections(
     grpcMethodDescription: String,
     source: String,
     destination: String
-)
+) derives ConfigReader
 
 final case class TracingConfig(
     required: List[String] = List.empty,
     incomingHeaders: Map[String, String] = Map.empty,
     outcomingHeaders: Map[String, String] = Map.empty,
-)
+) derives ConfigReader
 
 final case class MockingbirdConfiguration(
     server: ServerConfig,
@@ -96,11 +94,11 @@ final case class MockingbirdConfiguration(
     proxy: ProxyConfig,
     event: EventConfig,
     tracing: TracingConfig,
-)
+) derives ConfigReader
 
 object MockingbirdConfiguration {
-  implicit private def hint[T]: ProductHint[T] =
-    ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
+  //implicit private def hint[T]: ProductHint[T] =
+    //ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
 
   def load(): MockingbirdConfiguration =
     load(ConfigSource.default.at("ru.tinkoff.tcb"))

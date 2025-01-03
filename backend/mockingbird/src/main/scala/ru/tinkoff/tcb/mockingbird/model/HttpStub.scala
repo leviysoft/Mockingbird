@@ -4,22 +4,20 @@ import java.time.Instant
 import scala.util.matching.Regex
 
 import com.github.dwickern.macros.NameOf.*
-import derevo.circe.decoder
-import derevo.circe.encoder
-import derevo.derive
 import eu.timepit.refined.*
-import eu.timepit.refined.types.numeric.NonNegInt
-import eu.timepit.refined.types.string.NonEmptyString
+import io.circe.Decoder
+import io.circe.Encoder
 import io.circe.Json
 import io.circe.refined.*
 import mouse.boolean.*
 import sttp.tapir.Schema.annotations.description
 import sttp.tapir.codec.refined.*
-import sttp.tapir.derevo.schema
+import sttp.tapir.Schema
 
-import ru.tinkoff.tcb.bson.annotation.BsonKey
-import ru.tinkoff.tcb.bson.derivation.bsonDecoder
-import ru.tinkoff.tcb.bson.derivation.bsonEncoder
+import oolong.bson.*
+import oolong.bson.given
+import oolong.bson.meta.QueryMeta
+import oolong.bson.meta.queryMeta
 import ru.tinkoff.tcb.circe.bson.*
 import ru.tinkoff.tcb.mockingbird.model.StubCode
 import ru.tinkoff.tcb.predicatedsl.Keyword
@@ -31,9 +29,7 @@ import ru.tinkoff.tcb.utils.id.SID
 import ru.tinkoff.tcb.utils.unpack.*
 import ru.tinkoff.tcb.validation.Rule
 
-@derive(bsonDecoder, bsonEncoder, encoder, decoder, schema)
 final case class HttpStub(
-    @BsonKey("_id")
     @description("Mock id")
     id: SID[HttpStub],
     @description("Mock creation time")
@@ -41,14 +37,14 @@ final case class HttpStub(
     @description("Scope")
     scope: Scope,
     @description("The number of possible triggers. Only relevant for scope=countdown")
-    times: Option[NonNegInt],
+    times: Option[Int],
     serviceSuffix: String,
     @description("Mock name")
-    name: NonEmptyString,
+    name: String,
     @description("HTTP method")
     method: HttpMethod,
     @description("The path suffix where the mock triggers")
-    path: Option[NonEmptyString],
+    path: Option[String],
     pathPattern: Option[Regex],
     seed: Option[Json],
     @description("State search predicate")
@@ -63,9 +59,11 @@ final case class HttpStub(
     callback: Option[Callback],
     @description("tags")
     labels: Seq[String]
-)
+) derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema
 
 object HttpStub extends CallbackChecker {
+  inline given QueryMeta[HttpStub] = queryMeta(_.id -> "_id")
+
   private val pathOrPattern: Rule[HttpStub] = stub =>
     (stub.path, stub.pathPattern) match {
       case Some(_) <*> None | None <*> Some(_) => Vector.empty
@@ -92,7 +90,7 @@ object HttpStub extends CallbackChecker {
 
   private val responseCodes204and304: Rule[HttpStub] = stub =>
     stub.response match {
-      case StubCode(rc) if rc == refineMV[HttpStatusCodeRange](204) || rc == refineMV[HttpStatusCodeRange](304) =>
+      case StubCode(rc) if rc == refineV[HttpStatusCodeRange].unsafeFrom(204) || rc == refineV[HttpStatusCodeRange].unsafeFrom(304) =>
         stub.response match {
           case EmptyResponse(_, _, _) => Vector.empty
           case _ =>

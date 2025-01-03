@@ -1,11 +1,10 @@
 package ru.tinkoff.tcb.mockingbird.api.request
 
 import cats.data.NonEmptyVector
-import derevo.circe.decoder
-import derevo.circe.encoder
-import derevo.derive
+import io.circe.Decoder
+import io.circe.Encoder
 import sttp.tapir.Schema.annotations.description
-import sttp.tapir.derevo.schema
+import sttp.tapir.Schema
 
 import ru.tinkoff.tcb.generic.PropSubset
 import ru.tinkoff.tcb.mockingbird.model.DestinationConfiguration
@@ -14,7 +13,6 @@ import ru.tinkoff.tcb.mockingbird.model.ResourceRequest
 import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.id.SID
 
-@derive(decoder, encoder, schema)
 final case class CreateDestinationConfigurationRequest(
     @description("Unique configuration name")
     name: SID[DestinationConfiguration],
@@ -27,7 +25,7 @@ final case class CreateDestinationConfigurationRequest(
     init: Option[NonEmptyVector[ResourceRequest]],
     @description("Finalizer specification")
     shutdown: Option[NonEmptyVector[ResourceRequest]]
-)
+) derives Decoder, Encoder, Schema
 
 object CreateDestinationConfigurationRequest {
   implicitly[PropSubset[CreateDestinationConfigurationRequest, DestinationConfiguration]]

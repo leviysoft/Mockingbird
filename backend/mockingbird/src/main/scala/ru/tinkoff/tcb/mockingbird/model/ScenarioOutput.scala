@@ -1,36 +1,26 @@
 package ru.tinkoff.tcb.mockingbird.model
 
 import scala.concurrent.duration.FiniteDuration
-
 import com.github.dwickern.macros.NameOf.*
-import derevo.circe.decoder
-import derevo.circe.encoder
-import derevo.derive
 import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.Json
-import sttp.tapir.derevo.schema
+import io.circe.derivation.Configuration as CirceConfig
+import neotype.*
+import oolong.bson.*
+import oolong.bson.given
+import oolong.bson.annotation.BsonDiscriminator
 import sttp.tapir.generic.Configuration as TapirConfig
-
-import ru.tinkoff.tcb.bson.annotation.BsonDiscriminator
-import ru.tinkoff.tcb.bson.derivation.bsonDecoder
-import ru.tinkoff.tcb.bson.derivation.bsonEncoder
 import ru.tinkoff.tcb.circe.bson.*
 import ru.tinkoff.tcb.protocol.json.*
 import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.transformation.json.JsonTransformations
 import ru.tinkoff.tcb.utils.transformation.xml.XmlTransformation
 import ru.tinkoff.tcb.utils.xml.XMLString
+import sttp.tapir.Schema
 
-@derive(
-  bsonDecoder,
-  bsonEncoder,
-  decoder(ScenarioOutput.modes, true, Some("mode")),
-  encoder(ScenarioOutput.modes, Some("mode")),
-  schema
-)
 @BsonDiscriminator("mode")
-sealed trait ScenarioOutput {
+sealed trait ScenarioOutput derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema {
   def delay: Option[FiniteDuration]
   def isTemplate: Boolean
 }
@@ -44,13 +34,14 @@ object ScenarioOutput {
 
   implicit val customConfiguration: TapirConfig =
     TapirConfig.default.withDiscriminator("mode").copy(toEncodedName = modes)
+
+  given CirceConfig = CirceConfig(transformConstructorNames = modes).withDiscriminator("mode")
 }
 
-@derive(decoder, encoder)
 final case class RawOutput(
     payload: String,
     delay: Option[FiniteDuration]
-) extends ScenarioOutput {
+) extends ScenarioOutput derives Encoder, Decoder {
   val isTemplate = false
 }
 
@@ -74,7 +65,7 @@ object JsonOutput {
 }
 
 final case class XmlOutput(
-    payload: XMLString,
+    payload: XMLString.Type,
     delay: Option[FiniteDuration],
     isTemplate: Boolean = true
 ) extends ScenarioOutput
@@ -88,6 +79,6 @@ object XmlOutput {
 
   implicit val xoDecoder: Decoder[XmlOutput] =
     Decoder.forProduct2(nameOf[XmlOutput](_.payload), nameOf[XmlOutput](_.delay))((pl, dl) =>
-      XmlOutput(pl, dl, pl.toNode.isTemplate)
+      XmlOutput(pl, dl, pl.unwrap.isTemplate)
     )
 }

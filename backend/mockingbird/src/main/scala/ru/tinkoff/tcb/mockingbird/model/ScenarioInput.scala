@@ -2,35 +2,25 @@ package ru.tinkoff.tcb.mockingbird.model
 
 import scala.util.Try
 import scala.xml.Node
-
 import com.github.dwickern.macros.NameOf.*
-import derevo.circe.decoder
-import derevo.circe.encoder
-import derevo.derive
-import io.circe.Json
+import io.circe.{Decoder, Encoder, Json}
 import io.circe.parser.parse
-import sttp.tapir.derevo.schema
+import io.circe.derivation.Configuration as CirceConfig
 import sttp.tapir.generic.Configuration as TapirConfig
-
-import ru.tinkoff.tcb.bson.annotation.BsonDiscriminator
-import ru.tinkoff.tcb.bson.derivation.bsonDecoder
-import ru.tinkoff.tcb.bson.derivation.bsonEncoder
+import neotype.*
+import oolong.bson.*
+import oolong.bson.given
+import oolong.bson.annotation.BsonDiscriminator
 import ru.tinkoff.tcb.circe.bson.*
 import ru.tinkoff.tcb.predicatedsl.json.JsonPredicate
 import ru.tinkoff.tcb.predicatedsl.xml.XmlPredicate
 import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.xml.SafeXML
 import ru.tinkoff.tcb.utils.xml.XMLString
+import sttp.tapir.Schema
 
-@derive(
-  bsonDecoder,
-  bsonEncoder,
-  decoder(ScenarioInput.modes, true, Some("mode")),
-  encoder(ScenarioInput.modes, Some("mode")),
-  schema
-)
 @BsonDiscriminator("mode")
-sealed trait ScenarioInput {
+sealed trait ScenarioInput derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema {
   def checkMessage(message: String): Boolean
 
   def extractJson(message: String): Option[Json]
@@ -49,10 +39,11 @@ object ScenarioInput {
 
   implicit val customConfiguration: TapirConfig =
     TapirConfig.default.withDiscriminator("mode").copy(toEncodedName = modes)
+
+  given CirceConfig = CirceConfig(transformConstructorNames = modes).withDiscriminator("mode")
 }
 
-@derive(decoder, encoder)
-final case class RawInput(payload: String) extends ScenarioInput {
+final case class RawInput(payload: String) extends ScenarioInput derives Decoder, Encoder {
   override def checkMessage(message: String): Boolean = message == payload
 
   override def extractJson(message: String): Option[Json] = None
@@ -60,8 +51,7 @@ final case class RawInput(payload: String) extends ScenarioInput {
   override def extractXML(message: String): Option[Node] = None
 }
 
-@derive(decoder, encoder)
-final case class JsonInput(payload: Json) extends ScenarioInput {
+final case class JsonInput(payload: Json) extends ScenarioInput derives Decoder, Encoder {
   override def checkMessage(message: String): Boolean =
     parse(message).contains(payload)
 
@@ -71,10 +61,9 @@ final case class JsonInput(payload: Json) extends ScenarioInput {
   override def extractXML(message: String): Option[Node] = None
 }
 
-@derive(decoder, encoder)
-final case class XmlInput(payload: XMLString) extends ScenarioInput {
+final case class XmlInput(payload: XMLString.Type) extends ScenarioInput derives Decoder, Encoder {
   override def checkMessage(message: String): Boolean =
-    extractXML(message).contains(payload.toNode)
+    extractXML(message).contains(payload.unwrap)
 
   override def extractJson(message: String): Option[Json] = None
 
@@ -82,8 +71,7 @@ final case class XmlInput(payload: XMLString) extends ScenarioInput {
     Try(SafeXML.loadString(message)).toOption
 }
 
-@derive(decoder, encoder)
-final case class JLensInput(payload: JsonPredicate) extends ScenarioInput {
+final case class JLensInput(payload: JsonPredicate) extends ScenarioInput derives Decoder, Encoder {
   override def checkMessage(message: String): Boolean =
     extractJson(message).map(payload).getOrElse(false)
 
@@ -93,8 +81,7 @@ final case class JLensInput(payload: JsonPredicate) extends ScenarioInput {
   override def extractXML(message: String): Option[Node] = None
 }
 
-@derive(decoder, encoder)
-final case class XPathInput(payload: XmlPredicate) extends ScenarioInput {
+final case class XPathInput(payload: XmlPredicate) extends ScenarioInput derives Decoder, Encoder {
   override def checkMessage(message: String): Boolean =
     extractXML(message).exists(payload(_))
 

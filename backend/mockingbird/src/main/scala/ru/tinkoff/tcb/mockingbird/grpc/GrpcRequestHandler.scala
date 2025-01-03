@@ -4,14 +4,17 @@ import io.circe.Json
 import io.circe.syntax.KeyOps
 import io.grpc.StatusException
 import mouse.option.*
+import oolong.bson.*
+import oolong.bson.given
+import oolong.dsl.*
+import oolong.mongo.*
+import org.mongodb.scala.bson.Document
 import scalapb.zio_grpc.RequestContext
 import zio.Duration
 import zio.interop.catz.core.*
 import zio.stream.Stream
 import zio.stream.ZStream
 
-import ru.tinkoff.tcb.criteria.*
-import ru.tinkoff.tcb.criteria.Typed.*
 import ru.tinkoff.tcb.logging.MDCLogging
 import ru.tinkoff.tcb.mockingbird.api.Tracing
 import ru.tinkoff.tcb.mockingbird.api.WLD
@@ -20,7 +23,7 @@ import ru.tinkoff.tcb.mockingbird.dal.GrpcStubDAO
 import ru.tinkoff.tcb.mockingbird.dal.PersistentStateDAO
 import ru.tinkoff.tcb.mockingbird.error.StubSearchError
 import ru.tinkoff.tcb.mockingbird.error.ValidationError
-import ru.tinkoff.tcb.mockingbird.grpc.GrpcExractor.FromGrpcProtoDefinition
+import ru.tinkoff.tcb.mockingbird.grpc.GrpcExractor.{convertMessageToJson, parseFromJson}
 import ru.tinkoff.tcb.mockingbird.misc.Renderable.ops.*
 import ru.tinkoff.tcb.mockingbird.model.FillResponse
 import ru.tinkoff.tcb.mockingbird.model.FillStreamResponse
@@ -59,7 +62,7 @@ class GrpcRequestHandlerImpl(
           grpcServiceName = context.methodDescriptor.getFullMethodName
           _ <- Tracing.update(_.addToPayload("service" -> grpcServiceName))
           methodDescription <- methodDescriptionDAO
-            .findOne(prop[GrpcMethodDescription](_.methodName) === grpcServiceName)
+            .findOne(query[GrpcMethodDescription](_.methodName == lift(grpcServiceName)))
             .someOrFail(StubSearchError(s"Can't find methodDescription for $grpcServiceName"))
           (proxyStream, fillStream) <- stream
             .mapZIO(findStub(_, methodDescription))
@@ -114,7 +117,7 @@ class GrpcRequestHandlerImpl(
             .map(_.keys.map(_.path).filter(_.startsWith("_")).toVector)
             .filter(_.nonEmpty)
             .cata(_.traverse(stateDAO.createIndexForDataField), ZIO.unit)
-          _ <- ZIO.when(stub.scope == Scope.Countdown)(stubDAO.updateById(stub.id, prop[GrpcStub](_.times).inc(-1)))
+          _ <- ZIO.when(stub.scope == Scope.Countdown)(stubDAO.updateById(stub.id, Document("$inc" -> Document("times" -> (-1).bson))))
         } yield (stub, data, bytes)
       }
     } yield response

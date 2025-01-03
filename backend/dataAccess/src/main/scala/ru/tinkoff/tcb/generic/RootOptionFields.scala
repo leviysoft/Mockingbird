@@ -4,6 +4,8 @@ import java.time.Instant
 import java.time.Year
 import scala.annotation.implicitNotFound
 
+import eu.timepit.refined.api.RefType
+
 import magnolia1.*
 
 @implicitNotFound("Could not find an instance of RootOptionFields for ${T}")
@@ -13,7 +15,7 @@ trait RootOptionFields[T] extends Serializable {
   override def toString: String = fields.mkString(", ")
 }
 
-object RootOptionFields {
+object RootOptionFields extends AutoDerivation[RootOptionFields] {
   @inline def apply[T](implicit instance: RootOptionFields[T]): RootOptionFields[T] = instance
 
   def mk[T](fs: Set[String], isOption: Boolean = false): RootOptionFields[T] =
@@ -31,10 +33,10 @@ object RootOptionFields {
   implicit def map[K, V]: RootOptionFields[K Map V]     = mk(Set.empty)
   implicit def vector[T]: RootOptionFields[Vector[T]]   = mk(Set.empty)
   implicit def list[T]: RootOptionFields[List[T]]       = mk(Set.empty)
+  implicit def refn[T, R, F[_, _]](implicit rt: RefType[F], rof: RootOptionFields[T]): RootOptionFields[F[T, R]] =
+    mk(rof.fields)
 
-  type Typeclass[T] = RootOptionFields[T]
-
-  def join[T](caseClass: CaseClass[Typeclass, T]): Typeclass[T] =
+  def join[T](caseClass: CaseClass[RootOptionFields, T]): RootOptionFields[T] =
     mk(
       caseClass.parameters
         .foldLeft(Set.newBuilder[String])((acc, fld) =>
@@ -44,7 +46,5 @@ object RootOptionFields {
         .result()
     )
 
-  def split[T](sealedTrait: SealedTrait[Typeclass, T]): Typeclass[T] = mk(Set.empty)
-
-  implicit def genRootOptionFields[T]: Typeclass[T] = macro Magnolia.gen[T]
+  def split[T](sealedTrait: SealedTrait[RootOptionFields, T]): RootOptionFields[T] = mk(Set.empty)
 }

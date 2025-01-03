@@ -3,6 +3,7 @@ package ru.tinkoff.tcb.utils.sandboxing
 import scala.util.Try
 import scala.util.chaining.*
 
+import neotype.*
 import org.graalvm.polyglot.*
 
 import ru.tinkoff.tcb.mockingbird.config.JsSandboxConfig
@@ -16,7 +17,7 @@ class GraalJsSandbox(
   private val allowedClasses = GraalJsSandbox.DefaultAccess ++ jsSandboxConfig.allowedClasses
   private val preludeSource  = prelude.map(Source.create("js", _))
 
-  def makeRunner(environment: Map[String, GValue] = Map.empty): Resource[CodeRunner] =
+  def makeRunner(environment: Map[String, GValue.Type] = Map.empty): Resource[CodeRunner] =
     Resource
       .lean(
         Context

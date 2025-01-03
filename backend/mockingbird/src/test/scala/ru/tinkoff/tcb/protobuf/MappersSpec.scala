@@ -3,8 +3,8 @@ package ru.tinkoff.tcb.protobuf
 import com.github.os72.protobuf.dynamic.DynamicSchema
 import zio.test.*
 
-import ru.tinkoff.tcb.mockingbird.grpc.GrpcExractor.FromDynamicSchema
-import ru.tinkoff.tcb.mockingbird.grpc.GrpcExractor.FromGrpcProtoDefinition
+import ru.tinkoff.tcb.mockingbird.grpc.GrpcExractor.toDynamicSchema
+import ru.tinkoff.tcb.mockingbird.grpc.GrpcExractor.toGrpcProtoDefinition
 import ru.tinkoff.tcb.mockingbird.model.GrpcEnumSchema
 import ru.tinkoff.tcb.mockingbird.model.GrpcMessageSchema
 import ru.tinkoff.tcb.mockingbird.model.GrpcProtoDefinition

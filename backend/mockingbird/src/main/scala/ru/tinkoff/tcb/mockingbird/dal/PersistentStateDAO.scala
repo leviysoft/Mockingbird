@@ -1,13 +1,13 @@
 package ru.tinkoff.tcb.mockingbird.dal
 
 import com.github.dwickern.macros.NameOf.*
+import oolong.bson.given
 import org.mongodb.scala.MongoCollection
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.model.Filters.exists
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes.*
 
-import ru.tinkoff.tcb.bson.BsonEncoder.ops.*
 import ru.tinkoff.tcb.circe.bson.jsonBsonWriter
 import ru.tinkoff.tcb.dataaccess.UpdateResult
 import ru.tinkoff.tcb.mockingbird.misc.Renderable

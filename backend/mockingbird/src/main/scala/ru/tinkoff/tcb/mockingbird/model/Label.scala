@@ -1,15 +1,17 @@
 package ru.tinkoff.tcb.mockingbird.model
 
-import derevo.derive
-
-import ru.tinkoff.tcb.bson.annotation.BsonKey
-import ru.tinkoff.tcb.bson.derivation.bsonDecoder
-import ru.tinkoff.tcb.bson.derivation.bsonEncoder
+import oolong.bson.*
+import oolong.bson.given
+import oolong.bson.meta.QueryMeta
+import oolong.bson.meta.queryMeta
 import ru.tinkoff.tcb.utils.id.SID
 
-@derive(bsonDecoder, bsonEncoder)
 final case class Label(
-    @BsonKey("_id") id: SID[Label],
+    id: SID[Label],
     serviceSuffix: String,
     label: String
-)
+) derives BsonDecoder, BsonEncoder
+
+object Label {
+  inline given QueryMeta[Label] = queryMeta(_.id -> "_id")
+}

@@ -3,23 +3,23 @@ package ru.tinkoff.tcb.utils.id
 import glass.Equivalent
 import io.circe.*
 import pureconfig.ConfigReader
-import shapeless.tag
-import shapeless.tag.@@
+import com.softwaremill.tagging.*
 import sttp.tapir.Schema
 import tofu.logging.Loggable
 
-import ru.tinkoff.tcb.bson.*
+import oolong.bson.*
+import oolong.bson.given
 import ru.tinkoff.tcb.generic.PropSubset
 import ru.tinkoff.tcb.generic.RootOptionFields
 
 trait IDCompanion[I] {
   type Aux[T] >: I @@ T <: I @@ T
 
-  def apply[T](id: I): I @@ T = tag[T][I](id)
+  def apply[T](id: I): I @@ T = id.taggedWith[T]
 
   def unapply(id: I @@ ?): Some[I] = Some(id)
 
-  def equiv[T]: Equivalent[I, I @@ T] = Equivalent(apply[T](_))(_.asInstanceOf[I])
+  def equiv[T]: Equivalent[I, I @@ T] = Equivalent[I](apply[T](_))(_.asInstanceOf[I])
 
   implicit def encForID[T](implicit ei: Encoder[I]): Encoder[I @@ T] = ei.contramap(identity)
   implicit def decForID[T](implicit di: Decoder[I]): Decoder[I @@ T] = di.map(apply)

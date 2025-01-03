@@ -10,34 +10,30 @@ import alleycats.std.map.*
 import io.circe.Json
 import io.circe.JsonNumber
 import io.circe.JsonObject
-import io.estatico.newtype.macros.newtype
-import io.estatico.newtype.ops.*
+import neotype.*
 import org.graalvm.polyglot.Value
 import org.graalvm.polyglot.proxy.*
 
 package object conversion {
-  @newtype class GValue(val unwrap: AnyRef)
-  object GValue {
-    private[conversion] def apply(anyRef: AnyRef): GValue = anyRef.coerce
-  }
+  object GValue extends Newtype[AnyRef]
 
-  val circe2js: Json.Folder[GValue] = new Json.Folder[GValue] {
-    override def onNull: GValue = GValue(null)
+  val circe2js: Json.Folder[GValue.Type] = new Json.Folder[GValue.Type] {
+    override def onNull: GValue.Type = GValue(null)
 
-    override def onBoolean(value: Boolean): GValue = GValue(jl.Boolean.valueOf(value))
+    override def onBoolean(value: Boolean): GValue.Type = GValue(jl.Boolean.valueOf(value))
 
-    override def onNumber(value: JsonNumber): GValue =
+    override def onNumber(value: JsonNumber): GValue.Type =
       GValue(value.toLong.map(jl.Long.valueOf).getOrElse(jl.Float.valueOf(value.toFloat)))
 
-    override def onString(value: String): GValue = GValue(value)
+    override def onString(value: String): GValue.Type = GValue(value)
 
-    override def onArray(value: Vector[Json]): GValue = GValue(new ProxyArray {
+    override def onArray(value: Vector[Json]): GValue.Type = GValue(new ProxyArray {
       override def get(index: Long): AnyRef             = value(index.toInt).foldWith(circe2js).unwrap
       override def set(index: Long, value: Value): Unit = throw new UnsupportedOperationException()
       override def getSize: Long                        = value.size
     })
 
-    override def onObject(value: JsonObject): GValue = GValue(new ProxyObject {
+    override def onObject(value: JsonObject): GValue.Type = GValue(new ProxyObject {
       override def getMember(key: String): AnyRef = value.apply(key).map(_.foldWith(circe2js).unwrap).orNull
       override def getMemberKeys: AnyRef = new ProxyArray {
         private val keys                                  = value.keys.toVector

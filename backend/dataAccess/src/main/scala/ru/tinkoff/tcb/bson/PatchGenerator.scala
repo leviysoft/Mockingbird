@@ -1,10 +1,10 @@
 package ru.tinkoff.tcb.bson
 
+import oolong.bson.*
+import oolong.bson.given
+
 import scala.jdk.CollectionConverters.*
-
 import org.mongodb.scala.bson.*
-
-import ru.tinkoff.tcb.bson.BsonEncoder.ops.*
 import ru.tinkoff.tcb.generic.RootOptionFields
 
 object PatchGenerator {

@@ -23,28 +23,26 @@ final class SDFetcher(
 ) {
   private val log = MDCLogging.`for`[WLD](this)
 
-  @nowarn("cat=other-match-analysis")
-  private def reloadSrc: Stream[RIO[WLD, *], Unit] =
+  private def reloadSrc: Stream[[X] =>> RIO[WLD, X], Unit] =
     Stream
-      .awakeEvery[RIO[WLD, *]](eventConfig.reloadInterval)
+      .awakeEvery[[X] =>> RIO[WLD, X]](eventConfig.reloadInterval)
       .evalMap(_ => sourceDAO.getAll)
       .evalTap(sourceCache.set)
       .evalMap(srcs => log.info("Sources received: {}", srcs.map(_.name)))
       .handleErrorWith { case NonFatal(t) =>
         Stream.eval(log.errorCause("Error loading sources", t)) ++
-          Stream.sleep[RIO[WLD, *]](eventConfig.reloadInterval) ++ reloadSrc
+          Stream.sleep[[X] =>> RIO[WLD, X]](eventConfig.reloadInterval) ++ reloadSrc
       }
 
-  @nowarn("cat=other-match-analysis")
-  private def reloadDest: Stream[RIO[WLD, *], Unit] =
+  private def reloadDest: Stream[[X] =>> RIO[WLD, X], Unit] =
     Stream
-      .awakeEvery[RIO[WLD, *]](eventConfig.reloadInterval)
+      .awakeEvery[[X] =>> RIO[WLD, X]](eventConfig.reloadInterval)
       .evalMap(_ => destinationDAO.getAll)
       .evalTap(destionationCache.set)
       .evalMap(dsts => log.info("Destinations received: {}", dsts.map(_.name)))
       .handleErrorWith { case NonFatal(t) =>
         Stream.eval(log.errorCause("Error loading destinations", t)) ++
-          Stream.sleep[RIO[WLD, *]](eventConfig.reloadInterval) ++ reloadDest
+          Stream.sleep[[X] =>> RIO[WLD, X]](eventConfig.reloadInterval) ++ reloadDest
       }
 
   def getSources: UIO[Vector[SourceConfiguration]] = sourceCache.get

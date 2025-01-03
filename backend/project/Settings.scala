@@ -28,7 +28,7 @@ object Settings {
 
   val common = Seq(
     organization := "ru.tinkoff",
-    scalaVersion := "3.3.4",
+    scalaVersion := "3.4.3",
     Compile / packageDoc / publishArtifact := false,
     Compile / packageSrc / publishArtifact := false,
     Compile / doc / sources := Seq.empty,
@@ -36,14 +36,17 @@ object Settings {
       "-encoding",
       "utf8",
       "-deprecation",
+      "-explain-cyclic",
       "-explaintypes",
       "-feature",
       "-language:higherKinds",
       "-language:implicitConversions",
       "-release:11",
       "-unchecked",
+      "-Xmax-inlines", "64",
       "-Ybackend-parallelism",
       java.lang.Runtime.getRuntime.availableProcessors().toString,
+      "-Yretain-trees", //for accessing default values by magnolia
       prelude(), // standart imports + zio
       // warning settings
       //"-Wconf:any:wv", // shows warning categories for nowarn (https://www.scala-lang.org/2021/01/12/configuring-and-suppressing-warnings.html)
@@ -52,7 +55,7 @@ object Settings {
       "-Wvalue-discard"
     ),
     wartremoverDependencies ~= (_.filterNot(_.name == "wartremover-contrib")),
-    wartremoverDependencies += "org.wartremover" % "wartremover-contrib_2.13" % ContribWart.ContribVersion,
+    wartremoverDependencies += "org.wartremover" % "wartremover-contrib_3" % ContribWart.ContribVersion,
     wartremoverErrors ++= Seq(
       Wart.ExplicitImplicitTypes,
       Wart.FinalCaseClass,

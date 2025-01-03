@@ -1,19 +1,22 @@
 package ru.tinkoff.tcb.mockingbird.api.request
 
-import derevo.circe.decoder
-import derevo.circe.encoder
-import derevo.derive
+import io.circe.Decoder
+import io.circe.Encoder
 import eu.timepit.refined.*
-import eu.timepit.refined.types.numeric.NonNegInt
+import eu.timepit.refined.numeric.*
+import eu.timepit.refined.types.numeric.*
 import eu.timepit.refined.types.string.NonEmptyString
 import io.circe.Json
 import io.circe.refined.*
+import oolong.bson.*
+import oolong.bson.given
+import oolong.bson.refined.given
+import oolong.bson.meta.QueryMeta
+import oolong.bson.meta.queryMeta
 import sttp.tapir.Schema.annotations.description
 import sttp.tapir.codec.refined.*
-import sttp.tapir.derevo.schema
+import sttp.tapir.Schema
 
-import ru.tinkoff.tcb.bson.annotation.BsonKey
-import ru.tinkoff.tcb.bson.derivation.bsonEncoder
 import ru.tinkoff.tcb.circe.bson.*
 import ru.tinkoff.tcb.generic.PropSubset
 import ru.tinkoff.tcb.mockingbird.model.Callback
@@ -30,12 +33,11 @@ import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.circe.optics.JsonOptic
 import ru.tinkoff.tcb.utils.id.SID
 
-@derive(decoder, encoder, schema)
 final case class UpdateScenarioRequest(
     @description("Scope")
     scope: Scope,
     @description("The number of possible triggers. Only relevant for scope=countdown")
-    times: Option[NonNegInt] = Some(refineMV(1)),
+    times: Option[NonNegInt] = Some(refineV[NonNegative].unsafeFrom(1)),
     service: NonEmptyString,
     @description("Scenario name (shown in logs, handy for debugging)")
     name: NonEmptyString,
@@ -56,14 +58,13 @@ final case class UpdateScenarioRequest(
     callback: Option[Callback],
     @description("Tags")
     labels: Seq[String]
-)
+) derives Decoder, Encoder, Schema
 object UpdateScenarioRequest {
   implicitly[PropSubset[UpdateScenarioRequest, ScenarioPatch]]
 }
 
-@derive(bsonEncoder)
 final case class ScenarioPatch(
-    @BsonKey("_id") id: SID[Scenario],
+    id: SID[Scenario],
     scope: Scope,
     times: Option[NonNegInt],
     service: NonEmptyString,
@@ -77,4 +78,8 @@ final case class ScenarioPatch(
     output: Option[ScenarioOutput],
     callback: Option[Callback],
     labels: Seq[String]
-)
+) derives BsonEncoder
+
+object ScenarioPatch {
+  inline given QueryMeta[ScenarioPatch] = queryMeta(_.id -> "_id")
+}

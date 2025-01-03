@@ -1,18 +1,17 @@
 package ru.tinkoff.tcb.mongo
 
 import scala.jdk.CollectionConverters.*
-
 import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.MongoCollection
 import org.mongodb.scala.Observer
+import org.mongodb.scala.SingleObservableFuture
 import org.mongodb.scala.bson.*
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.changestream.*
-
-import ru.tinkoff.tcb.bson.*
-import ru.tinkoff.tcb.bson.BsonEncoder.ops.*
-import ru.tinkoff.tcb.criteria.Untyped.*
+import oolong.bson.*
+import oolong.bson.given
+import ru.tinkoff.tcb.bson.PatchGenerator
 import ru.tinkoff.tcb.dataaccess.UpdateResult
 import ru.tinkoff.tcb.generic.Fields
 import ru.tinkoff.tcb.generic.PropSubset
@@ -65,9 +64,9 @@ abstract class DAOBase[T: BsonDecoder: BsonEncoder](
 
   override def update(entity: T)(implicit rof: RootOptionFields[T]): Task[UpdateResult] = {
     val (entityId, patch) = PatchGenerator.mkPatch(entity)
-    val query             = entityId.map(eid => where(_._id === eid))
+    val query             = entityId.map(eid => Document("_id" -> eid))
 
-    query.fold(ZIO.attempt(UpdateResult.empty))(expr => runUpdate(expr.bson.asDocument(), patch))
+    query.fold(ZIO.attempt(UpdateResult.empty))(expr => runUpdate(expr, patch))
   }
 
   override def updateIf(query: Bson, entity: T)(implicit
@@ -75,11 +74,11 @@ abstract class DAOBase[T: BsonDecoder: BsonEncoder](
   ): Task[UpdateResult] = {
     val (entityId, patch) = PatchGenerator.mkPatch(entity)
     val compQuery = entityId
-      .map(eid => where(_._id === eid))
-      .map(_.bson :+ query.toBsonDocument(classOf[BsonDocument], DEFAULT_CODEC_REGISTRY))
+      .map(eid => Document("_id" -> eid))
+      .map(_.asInstanceOf[BsonValue] :+ query.toBsonDocument(classOf[BsonDocument], DEFAULT_CODEC_REGISTRY))
 
     compQuery.fold(ZIO.attempt(UpdateResult.empty)) { expr =>
-      runUpdate(expr.bson.asDocument(), patch)
+      runUpdate(expr.asDocument(), patch)
     }
   }
 
@@ -87,9 +86,9 @@ abstract class DAOBase[T: BsonDecoder: BsonEncoder](
       patch: P
   )(implicit rof: RootOptionFields[P], ps: PropSubset[P, T]): Task[UpdateResult] = {
     val (entityId, patchDoc) = PatchGenerator.mkPatch(patch)
-    val query                = entityId.map(eid => where(_._id === eid))
+    val query                = entityId.map(eid => Document("_id" -> eid))
 
-    query.fold(ZIO.attempt(UpdateResult.empty))(expr => runUpdate(expr.bson.asDocument(), patchDoc))
+    query.fold(ZIO.attempt(UpdateResult.empty))(expr => runUpdate(expr, patchDoc))
   }
 
   override def patchIf[P: BsonEncoder](query: Query, patch: P)(implicit
@@ -98,8 +97,8 @@ abstract class DAOBase[T: BsonDecoder: BsonEncoder](
   ): Task[UpdateResult] = {
     val (entityId, patchDoc) = PatchGenerator.mkPatch(patch)
     val compQuery = entityId
-      .map(eid => where(_._id === eid))
-      .map(_.bson :+ query.toBsonDocument(classOf[BsonDocument], DEFAULT_CODEC_REGISTRY))
+      .map(eid => Document("_id" -> eid))
+      .map(_.asInstanceOf[BsonValue] :+ query.toBsonDocument(classOf[BsonDocument], DEFAULT_CODEC_REGISTRY))
 
     compQuery.fold(ZIO.attempt(UpdateResult.empty)) { expr =>
       runUpdate(expr.bson.asDocument(), patchDoc)

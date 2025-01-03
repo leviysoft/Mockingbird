@@ -1,20 +1,18 @@
 package ru.tinkoff.tcb.mockingbird.api.request
 
-import derevo.circe.decoder
-import derevo.circe.encoder
-import derevo.derive
+import io.circe.Decoder
+import io.circe.Encoder
 import eu.timepit.refined.types.string.NonEmptyString
 import io.circe.refined.*
 import sttp.tapir.Schema.annotations.description
 import sttp.tapir.codec.refined.*
-import sttp.tapir.derevo.schema
+import sttp.tapir.Schema
 
 import ru.tinkoff.tcb.mockingbird.model.ByteArray
 import ru.tinkoff.tcb.mockingbird.model.GrpcConnectionType
 import ru.tinkoff.tcb.mockingbird.model.GrpcMethodDescription
 import ru.tinkoff.tcb.utils.id.SID
 
-@derive(decoder, encoder, schema)
 final case class CreateGrpcMethodDescriptionRequest(
     @description("Unique method description name")
     id: SID[GrpcMethodDescription],
@@ -31,9 +29,9 @@ final case class CreateGrpcMethodDescriptionRequest(
     @description("gRPC request class")
     requestClass: String,
     @description("gRPC base64 encoded request proto")
-    requestCodecs: ByteArray,
+    requestCodecs: ByteArray.Type,
     @description("gRPC response class")
     responseClass: String,
     @description("gRPC base64 encoded response proto")
-    responseCodecs: ByteArray
-)
+    responseCodecs: ByteArray.Type
+) derives Decoder, Encoder, Schema

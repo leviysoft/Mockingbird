@@ -2,7 +2,7 @@ import ProjectKeys._
 import ch.epfl.scala.sbtmissinglink.MissingLinkPlugin.missinglinkConflictsTag
 import sbt.Keys.concurrentRestrictions
 
-ThisBuild / scalaVersion := "3.3.4"
+ThisBuild / scalaVersion := "3.4.3"
 
 ThisBuild / concurrentRestrictions += Tags.limit(missinglinkConflictsTag, 1)
 
@@ -27,7 +27,7 @@ val dataAccess = (project in file("dataAccess"))
   .settings(Settings.common)
   .settings(
     scalacOptions += "-language:experimental.macros",
-    libraryDependencies ++= Dependencies.alleycats ++ Dependencies.cats ++ Dependencies.zio ++ Dependencies.catsTagless ++ Dependencies.mouse ++ Seq(
+    libraryDependencies ++= Dependencies.alleycats ++ Dependencies.cats ++ Dependencies.zio ++ Dependencies.mouse ++ Dependencies.oolong ++ Seq(
       "com.beachape"                 %% "enumeratum"                      % "1.7.5",
       "org.mongodb.scala"            %% "mongo-scala-driver"              % Versions.mongoScalaDriver cross CrossVersion.for3Use2_13,
       "com.softwaremill.magnolia1_3" %% "magnolia"                        % "1.3.8",
@@ -44,7 +44,6 @@ val mockingbird = (project in file("mockingbird"))
     name := "mockingbird",
     libraryDependencies ++= Seq(
       Dependencies.cats,
-      Dependencies.catsTagless,
       Dependencies.enumeratum,
       Dependencies.scalatest,
       Dependencies.tofu,
@@ -63,13 +62,15 @@ val mockingbird = (project in file("mockingbird"))
       "com.softwaremill.sttp.client4" %% "zio"                 % Versions.sttp,
       "com.softwaremill.sttp.client4" %% "circe"               % Versions.sttp,
       "org.apache.tika"                % "tika-core"           % "2.1.0",
-      "io.scalaland"                  %% "chimney"             % "0.8.5",
+      "io.scalaland"                  %% "chimney"             % "1.6.0",
       "com.ironcorelabs"              %% "cats-scalatest"      % "4.0.0" % Test,
       "com.google.code.findbugs"       % "jsr305"              % "3.0.2" % Optional,
       "com.github.dwickern"           %% "scala-nameof"        % "4.0.0" % Provided,
       "com.github.os72"                % "protobuf-dynamic"    % "1.0.1",
       "com.github.geirolz"            %% "advxml-core"         % "2.5.1",
       "com.github.geirolz"            %% "advxml-xpath"        % "2.5.1",
+      "io.github.kitlangton"          %% "neotype"             % "0.3.8",
+      "com.softwaremill.common"       %% "tagging"             % "2.3.5",
       "org.mozilla"                    % "rhino"               % "1.7.14",
       "org.graalvm.polyglot"           % "js"                  % "23.1.+",
       "org.slf4j"                      % "slf4j-api"           % "1.7.30" % Provided
@@ -152,6 +153,7 @@ lazy val `mockingbird-native` = (project in file("mockingbird-native"))
     )
   )
 
+/*
 val edsl = (project in file("edsl"))
   .dependsOn(utils, circeUtils)
   .settings(Settings.common)
@@ -167,7 +169,7 @@ val edsl = (project in file("edsl"))
     ).flatten,
     libraryDependencies ++= Seq(
       "com.softwaremill.sttp.client4" %% "circe"               % Versions.sttp,
-      //"pl.muninn"                     %% "scala-md-tag"        % "0.2.3",
+      "pl.muninn"                     %% "scala-md-tag"        % "0.2.3",
     ),
   )
   .settings(
@@ -200,7 +202,7 @@ val examples = (project in file("examples"))
       "lintAll",
       "scalafixAll; scalafmtAll"
     )
-  )
+  )*/
 
 val root = (project in file("."))
   .disablePlugins(ContribWarts)
@@ -211,7 +213,7 @@ val root = (project in file("."))
     mockingbird,
     `mockingbird-api`,
     `mockingbird-native`,
-    `edsl`
+//    `edsl`
   )
   .settings(
     run / aggregate := false,

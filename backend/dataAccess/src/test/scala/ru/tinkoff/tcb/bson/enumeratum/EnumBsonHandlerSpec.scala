@@ -5,8 +5,8 @@ import org.scalatest.OptionValues.*
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
-import ru.tinkoff.tcb.bson.BsonDecoder
-import ru.tinkoff.tcb.bson.BsonEncoder
+import oolong.bson.*
+import oolong.bson.given
 
 class EnumBsonHandlerSpec extends AnyFunSpec with Matchers {
   testScenario(
@@ -72,7 +72,7 @@ class EnumBsonHandlerSpec extends AnyFunSpec with Matchers {
     def writeTests(theWriter: BsonEncoder[Dummy]): Unit =
       it("should write enum values to BSONString") {
         expectedWrites.foreach { case (k, v) =>
-          theWriter.toBson(k) shouldBe BsonString(v)
+          k.bson shouldBe BsonString(v)
         }
       }
 

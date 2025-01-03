@@ -7,10 +7,12 @@ import eu.timepit.refined.numeric.*
 import io.circe.Json
 import mouse.boolean.*
 import mouse.option.*
+import oolong.bson.*
+import oolong.bson.given
+import oolong.dsl.*
+import oolong.mongo.*
 import zio.interop.catz.core.*
 
-import ru.tinkoff.tcb.criteria.*
-import ru.tinkoff.tcb.criteria.Typed.*
 import ru.tinkoff.tcb.logging.MDCLogging
 import ru.tinkoff.tcb.mockingbird.api.WLD
 import ru.tinkoff.tcb.mockingbird.dal.PersistentStateDAO
@@ -41,12 +43,13 @@ class ScenarioResolver(
   ): RIO[WLD, Option[(Scenario, Option[PersistentState])]] =
     (for {
       _ <- log.info("Searching for scenarios for source {} of type {}", source, scope)
-      condition0 = prop[Scenario](_.source) === source && prop[Scenario](_.scope) === scope
-      condition = (scope == Scope.Countdown).fold(
+      condition0 = query[Scenario](s => s.source == lift(source) && s.scope == lift(scope))
+      //TODO
+      /*condition = (scope == Scope.Countdown).fold(
         condition0 && prop[Scenario](_.times) > Option(refineMV[NonNegative](0)),
         condition0
-      )
-      scenarios0 <- scenarioDAO.findChunk(condition, 0, Int.MaxValue)
+      )*/
+      scenarios0 <- scenarioDAO.findChunk(condition0, 0, Int.MaxValue)
       _ <- ZIO.when(scenarios0.isEmpty)(
         log.info("No handlers found for source {} of type {}", source, scope) *>
           ZIO.fail(EarlyReturn)
@@ -98,7 +101,7 @@ class ScenarioResolver(
   ): Option[StateSpec] =
     (spec, bodyJson).mapN(_.fill(_)).orElse((spec, bodyXml).mapN(_.fill(_))).orElse(spec)
 
-  private def findStates(id: SID[?], spec: StateSpec): RIO[WLD, Vector[PersistentState]] =
+  private def findStates[E](id: SID[E], spec: StateSpec): RIO[WLD, Vector[PersistentState]] =
     for {
       _      <- log.info("Searching for state for {} based on condition {}", id, spec.renderJson.noSpaces)
       states <- stateDAO.findBySpec(spec)

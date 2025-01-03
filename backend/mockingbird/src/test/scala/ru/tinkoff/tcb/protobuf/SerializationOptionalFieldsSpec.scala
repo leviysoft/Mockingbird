@@ -8,8 +8,8 @@ import io.circe.*
 import zio.test.*
 import zio.test.Assertion.*
 
-import ru.tinkoff.tcb.mockingbird.grpc.GrpcExractor.FromDynamicSchema
-import ru.tinkoff.tcb.mockingbird.grpc.GrpcExractor.FromGrpcProtoDefinition
+import ru.tinkoff.tcb.mockingbird.grpc.GrpcExractor.toGrpcProtoDefinition
+import ru.tinkoff.tcb.mockingbird.grpc.GrpcExractor.toDynamicSchema
 
 object SerializationOptionalFieldsSpec extends ZIOSpecDefault {
   val msgOptionalFieldAbsent          = Array[Byte](0x0a, 0x04, 0x31, 0x71, 0x77, 0x65)

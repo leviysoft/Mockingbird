@@ -12,10 +12,8 @@ import io.circe.KeyEncoder
 import sttp.tapir.Schema
 import sttp.tapir.codec.enumeratum.TapirCodecEnumeratum
 
-import ru.tinkoff.tcb.bson.BsonDecoder
-import ru.tinkoff.tcb.bson.BsonEncoder
-import ru.tinkoff.tcb.bson.BsonKeyDecoder
-import ru.tinkoff.tcb.bson.BsonKeyEncoder
+import oolong.bson.*
+import oolong.bson.given
 import ru.tinkoff.tcb.bson.enumeratum.values.StringBsonValueEnum
 
 sealed abstract class Keyword(val value: String, val bsonKey: String) extends StringEnumEntry

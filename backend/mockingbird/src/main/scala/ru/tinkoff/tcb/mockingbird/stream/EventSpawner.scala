@@ -8,6 +8,7 @@ import io.circe.Error as CirceError
 import io.circe.parser.parse
 import mouse.all.optionSyntaxMouse
 import mouse.boolean.*
+import neotype.*
 import sttp.client4.{Backend as SttpBackend, *}
 import sttp.model.Method
 import zio.interop.catz.*
@@ -74,9 +75,9 @@ final class EventSpawner(
 
   private def fetch(req: EventSourceRequest, triggers: Vector[ResponseSpec]): Task[Vector[String]] = {
     val request = basicRequest
-      .headers(req.headers.view.mapValues(_.asString).toMap)
-      .pipe(r => req.body.cata(b => r.body(b.asString), r))
-      .method(Method(req.method.entryName), uri"${req.url.asString}")
+      .headers(req.headers.view.mapValues(_.unwrap).toMap)
+      .pipe(r => req.body.cata(b => r.body(b.unwrap), r))
+      .method(Method(req.method.entryName), uri"${req.url.unwrap}")
       .response(asStringBypass(req.bypassCodes.getOrElse(Set())))
 
     for {
@@ -86,7 +87,7 @@ final class EventSpawner(
         .fromEither(response.body)
         .mapError[Exception](err =>
           (if (reInit) SourceFault(_) else EventProcessingError(_))(
-            s"The request to ${req.url.asString} ended with an error ($err)"
+            s"The request to ${req.url.unwrap} ended with an error ($err)"
           )
         )
       processed <- ZIO.fromEither {
@@ -99,9 +100,9 @@ final class EventSpawner(
     } yield processed
   }
 
-  private def fetchStream: Stream[RIO[WLD, *], Unit] =
+  private def fetchStream: Stream[[X] =>> RIO[WLD, X], Unit] =
     Stream
-      .awakeEvery[RIO[WLD, *]](eventConfig.fetchInterval)
+      .awakeEvery[[X] =>> RIO[WLD, X]](eventConfig.fetchInterval)
       .evalMap(_ => fetcher.getSources)
       .evalMap(
         ZIO
@@ -126,14 +127,14 @@ final class EventSpawner(
       )
       .handleErrorWith {
         case thr if recover.isDefinedAt(thr) =>
-          Stream.eval(recover(thr)) ++ Stream.sleep[RIO[WLD, *]](eventConfig.fetchInterval) ++ fetchStream
+          Stream.eval(recover(thr)) ++ Stream.sleep[[X] =>> RIO[WLD, X]](eventConfig.fetchInterval) ++ fetchStream
         case CompoundError(errs) =>
           val recoverable = errs.filter(recover.isDefinedAt)
           val fatal       = errs.find(!recover.isDefinedAt(_))
 
-          Stream.evalSeq(ZIO.foreach(recoverable)(recover)) ++ Stream.raiseError[RIO[WLD, *]](fatal.get).as(())
+          Stream.evalSeq(ZIO.foreach(recoverable)(recover)) ++ Stream.raiseError[[X] =>> RIO[WLD, X]](fatal.get).as(())
         case thr =>
-          Stream.raiseError[RIO[WLD, *]](thr).as(())
+          Stream.raiseError[[X] =>> RIO[WLD, X]](thr).as(())
       }
 
   def run: RIO[WLD, Unit] = fetchStream.compile.drain

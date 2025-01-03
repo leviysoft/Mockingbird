@@ -6,10 +6,10 @@ import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.Json
 import org.bson.BsonInvalidOperationException
+import oolong.bson.*
+import oolong.bson.given
 import sttp.tapir.Schema
 
-import ru.tinkoff.tcb.bson.BsonDecoder
-import ru.tinkoff.tcb.bson.BsonEncoder
 import ru.tinkoff.tcb.circe.bson.*
 import ru.tinkoff.tcb.generic.RootOptionFields
 import ru.tinkoff.tcb.predicatedsl.Keyword

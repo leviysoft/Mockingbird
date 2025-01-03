@@ -1,9 +1,6 @@
 package ru.tinkoff.tcb.mockingbird.model
 
 import com.github.dwickern.macros.NameOf.nameOfType
-import derevo.circe.decoder
-import derevo.circe.encoder
-import derevo.derive
 import enumeratum.CirceEnum
 import enumeratum.Enum
 import enumeratum.EnumEntry
@@ -11,18 +8,16 @@ import enumeratum.EnumEntry.Snakecase
 import enumeratum.values.StringCirceEnum
 import enumeratum.values.StringEnum
 import enumeratum.values.StringEnumEntry
+import io.circe.{Decoder, Encoder}
+import io.circe.derivation.Configuration as CirceConfig
+import oolong.bson.*
+import oolong.bson.annotation.BsonDiscriminator
+import oolong.bson.given
+import oolong.bson.meta.QueryMeta
+import oolong.bson.meta.queryMeta
 import sttp.tapir.Schema
 import sttp.tapir.codec.enumeratum.TapirCodecEnumeratum
-import sttp.tapir.derevo.schema
 import sttp.tapir.generic.Configuration as TapirConfig
-
-import ru.tinkoff.tcb.bson.BsonDecoder
-import ru.tinkoff.tcb.bson.BsonEncoder
-import ru.tinkoff.tcb.bson.annotation.BsonDiscriminator
-import ru.tinkoff.tcb.bson.derivation.DerivedDecoder
-import ru.tinkoff.tcb.bson.derivation.DerivedEncoder
-import ru.tinkoff.tcb.bson.derivation.bsonDecoder
-import ru.tinkoff.tcb.bson.derivation.bsonEncoder
 import ru.tinkoff.tcb.bson.enumeratum.BsonEnum
 import ru.tinkoff.tcb.bson.enumeratum.values.StringBsonValueEnum
 import ru.tinkoff.tcb.protocol.schema.*
@@ -48,7 +43,6 @@ object GrpcLabel
   override def values: IndexedSeq[GrpcLabel] = findValues
 }
 
-@derive(encoder, decoder, bsonDecoder, bsonEncoder, schema)
 final case class GrpcField(
     typ: GrpcType,
     label: GrpcLabel,
@@ -56,29 +50,16 @@ final case class GrpcField(
     name: String,
     order: Int,
     isProto3Optional: Option[Boolean],
-)
+) derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema
 
-@derive(
-  bsonDecoder,
-  bsonEncoder,
-  decoder(GrpcSchema.modes, true, Some("type")),
-  encoder(GrpcSchema.modes, Some("type")),
-  schema
-)
 @BsonDiscriminator("type")
-sealed trait GrpcSchema {
+sealed trait GrpcSchema derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema {
   def name: String
 }
 
-@derive(
-  bsonDecoder,
-  bsonEncoder,
-  decoder(GrpcRootMessage.modes, true, Some("type")),
-  encoder(GrpcRootMessage.modes, Some("type")),
-  schema
-)
-@BsonDiscriminator("type")
-sealed trait GrpcRootMessage extends GrpcSchema
+//TODO
+//@BsonDiscriminator("type")
+sealed trait GrpcRootMessage extends GrpcSchema derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema
 
 object GrpcRootMessage {
   val modes: Map[String, String] = Map(
@@ -88,6 +69,8 @@ object GrpcRootMessage {
 
   implicit val customConfiguration: TapirConfig =
     TapirConfig.default.withDiscriminator("type").copy(toEncodedName = modes)
+
+  given CirceConfig = CirceConfig(transformConstructorNames = modes).withDiscriminator("type")
 }
 
 object GrpcSchema {
@@ -99,38 +82,32 @@ object GrpcSchema {
 
   implicit val customConfiguration: TapirConfig =
     TapirConfig.default.withDiscriminator("type").copy(toEncodedName = modes)
+
+  given CirceConfig = CirceConfig(transformConstructorNames = modes).withDiscriminator("type")
 }
 
-@derive(encoder, decoder)
 final case class GrpcMessageSchema(
     name: String,
     fields: List[GrpcField],
     oneofs: Option[List[GrpcOneOfSchema]] = None,
     nested: Option[List[GrpcMessageSchema]] = None,
     nestedEnums: Option[List[GrpcEnumSchema]] = None,
-) extends GrpcRootMessage
+) extends GrpcRootMessage derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema
 
-object GrpcMessageSchema {
-  implicit lazy val gmsSchema: Schema[GrpcMessageSchema]       = Schema.derived[GrpcMessageSchema]
-  implicit lazy val gmsEncoder: BsonEncoder[GrpcMessageSchema] = DerivedEncoder.genBsonEncoder
-  implicit lazy val gmsDecoder: BsonDecoder[GrpcMessageSchema] = DerivedDecoder.genBsonDecoder
-}
+object GrpcMessageSchema
 
-@derive(encoder, decoder, bsonEncoder, bsonDecoder, schema)
 final case class GrpcEnumSchema(
     name: String,
-    values: Map[FieldName, FieldNumber]
-) extends GrpcRootMessage
+    values: Map[FieldName.Type, FieldNumber.Type]
+) extends GrpcRootMessage derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema
 
-@derive(encoder, decoder, bsonDecoder, bsonEncoder, schema)
 final case class GrpcOneOfSchema(
     name: String,
     options: List[GrpcField]
-) extends GrpcSchema
+) extends GrpcSchema derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema
 
-@derive(encoder, decoder, bsonDecoder, bsonEncoder, schema)
 final case class GrpcProtoDefinition(
     name: String,
     schemas: List[GrpcRootMessage],
     `package`: Option[String] = None
-)
+) derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema

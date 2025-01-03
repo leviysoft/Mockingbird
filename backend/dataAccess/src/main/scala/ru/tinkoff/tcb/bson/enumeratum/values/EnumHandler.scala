@@ -1,9 +1,9 @@
 package ru.tinkoff.tcb.bson.enumeratum.values
 
 import enumeratum.values.*
+import oolong.bson.{BsonDecoder, BsonEncoder}
+import oolong.bson.given
 import org.mongodb.scala.bson.*
-
-import ru.tinkoff.tcb.bson.*
 
 object EnumHandler {
 
@@ -25,5 +25,5 @@ object EnumHandler {
   )(implicit
       baseBsonWriter: BsonEncoder[ValueType]
   ): BsonEncoder[EntryType] =
-    (value: EntryType) => baseBsonWriter.toBson(value.value)
+    (value: EntryType) => value.value.bson
 }

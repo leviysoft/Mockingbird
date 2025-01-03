@@ -1,13 +1,15 @@
 package ru.tinkoff.tcb.mockingbird.model
 
-import derevo.circe.decoder
-import derevo.circe.encoder
-import derevo.derive
-import sttp.tapir.derevo.schema
+import io.circe.{Decoder, Encoder}
+import oolong.bson.BsonDecoder
+import oolong.bson.BsonEncoder
+import oolong.bson.given
+import oolong.bson.meta.QueryMeta
+import oolong.bson.meta.queryMeta
+import sttp.tapir.Schema
 
-import ru.tinkoff.tcb.bson.annotation.BsonKey
-import ru.tinkoff.tcb.bson.derivation.bsonDecoder
-import ru.tinkoff.tcb.bson.derivation.bsonEncoder
+final case class Service(suffix: String, name: String) derives BsonEncoder, BsonDecoder, Decoder, Encoder, Schema
 
-@derive(bsonDecoder, bsonEncoder, encoder, decoder, schema)
-final case class Service(@BsonKey("_id") suffix: String, name: String)
+object Service {
+  inline given QueryMeta[Service] = queryMeta(_.suffix -> "_id")
+}

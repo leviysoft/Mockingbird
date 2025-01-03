@@ -6,47 +6,45 @@ import scala.xml.Node
 
 import io.circe.Decoder
 import io.circe.Encoder
-import io.estatico.newtype.macros.newtype
-import io.estatico.newtype.ops.*
+import neotype.*
+import oolong.bson.*
+import oolong.bson.given
 import sttp.tapir.Schema
 
-import ru.tinkoff.tcb.bson.BsonDecoder
-import ru.tinkoff.tcb.bson.BsonEncoder
 import ru.tinkoff.tcb.generic.RootOptionFields
 
 package object xml {
   val emptyNode: Elem = <empty/>
 
-  @newtype class XMLString private (val toNode: Node)
+  object XMLString extends Newtype[Node] {
+    def fromString(xml: String): Try[XMLString.Type] =
+      Try(SafeXML.loadString(xml).asInstanceOf[Node]).map(this.unsafeMake)
 
-  object XMLString {
-    def fromString(xml: String): Try[XMLString] = Try(SafeXML.loadString(xml).asInstanceOf[Node].coerce)
+    def fromNode(node: Node): XMLString.Type = this.unsafeMake(node)
 
-    def fromNode(node: Node): XMLString = node.coerce
-
-    def unapply(str: String): Option[XMLString] =
+    def unapply(str: String): Option[XMLString.Type] =
       fromString(str).toOption
 
-    implicit val xmlStringDecoder: Decoder[XMLString] =
+    implicit val xmlStringDecoder: Decoder[XMLString.Type] =
       Decoder.decodeString.emapTry(fromString)
 
-    implicit val xmlStringEncoder: Encoder[XMLString] =
-      Encoder.encodeString.contramap[XMLString](_.asString)
+    implicit val xmlStringEncoder: Encoder[XMLString.Type] =
+      Encoder.encodeString.contramap[XMLString.Type](_.asString)
 
-    implicit val xmlStringBsonDecoder: BsonDecoder[XMLString] =
+    implicit val xmlStringBsonDecoder: BsonDecoder[XMLString.Type] =
       BsonDecoder[String].afterReadTry(fromString)
 
-    implicit val xmlStringBsonEncoder: BsonEncoder[XMLString] =
+    implicit val xmlStringBsonEncoder: BsonEncoder[XMLString.Type] =
       BsonEncoder[String].beforeWrite(_.asString)
 
-    implicit val xmlStringSchema: Schema[XMLString] =
-      Schema.schemaForString.as[XMLString]
+    implicit val xmlStringSchema: Schema[XMLString.Type] =
+      Schema.schemaForString.as[XMLString.Type]
 
-    implicit val xmlStringRof: RootOptionFields[XMLString] =
+    implicit val xmlStringRof: RootOptionFields[XMLString.Type] =
       RootOptionFields.mk(Set.empty)
   }
 
-  implicit class XMLStringSyntax(private val self: XMLString) extends AnyVal {
-    def asString: String = self.toNode.toString()
+  implicit class XMLStringSyntax(private val self: XMLString.Type) extends AnyVal {
+    def asString: String = self.unwrap.toString
   }
 }

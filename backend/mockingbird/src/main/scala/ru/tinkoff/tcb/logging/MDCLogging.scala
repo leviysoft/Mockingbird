@@ -13,7 +13,7 @@ import tofu.logging.Logging.Warn
 
 import ru.tinkoff.tcb.mockingbird.api.Tracing
 
-class MDCLogging[R <: Tracing](logger: Logger) extends Logging[URIO[R, *]] {
+class MDCLogging[R <: Tracing](logger: Logger) extends Logging[[X] =>> URIO[R, X]] {
   override def write(level: Logging.Level, message: String, values: LoggedValue*): URIO[Tracing, Unit] =
     level match {
       case Trace =>

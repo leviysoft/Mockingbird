@@ -14,7 +14,7 @@ import zio.managed.*
 
 import ru.tinkoff.tcb.logging.MDCLogging
 import ru.tinkoff.tcb.mockingbird.api.Tracing
-import ru.tinkoff.tcb.mockingbird.grpc.GrpcExractor.FromDynamicSchema
+import ru.tinkoff.tcb.mockingbird.grpc.GrpcExractor.toGrpcProtoDefinition
 import ru.tinkoff.tcb.mockingbird.model.GrpcProtoDefinition
 
 trait ProtobufSchemaResolver {

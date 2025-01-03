@@ -11,10 +11,8 @@ import io.circe.KeyEncoder
 import org.mongodb.scala.bson.BsonString
 import sttp.tapir.Schema
 
-import ru.tinkoff.tcb.bson.BsonDecoder
-import ru.tinkoff.tcb.bson.BsonEncoder
-import ru.tinkoff.tcb.bson.BsonKeyDecoder
-import ru.tinkoff.tcb.bson.BsonKeyEncoder
+import oolong.bson.*
+import oolong.bson.given
 
 /*
  * toZoom inside extra braces is important. It excludes this value from hash and equals method.

@@ -10,11 +10,11 @@ import eu.timepit.refined.numeric.*
 import io.circe.Json
 import mouse.boolean.*
 import mouse.option.*
+import oolong.dsl.*
+import oolong.mongo.*
 import org.mongodb.scala.bson.*
 import zio.interop.catz.core.*
 
-import ru.tinkoff.tcb.criteria.*
-import ru.tinkoff.tcb.criteria.Typed.*
 import ru.tinkoff.tcb.logging.MDCLogging
 import ru.tinkoff.tcb.mockingbird.dal.HttpStubDAO
 import ru.tinkoff.tcb.mockingbird.dal.PersistentStateDAO
@@ -52,8 +52,7 @@ final class StubResolver(
     (
       for {
         _ <- log.info("Searching stubs for request to {} of type {}", path, scope)
-        pathPatternExpr = Expression[HttpStub](
-          None,
+        pathPatternExpr = BsonDocument(
           "$expr" -> BsonDocument(
             "$regexMatch" -> BsonDocument(
               "input" -> path,
@@ -61,16 +60,17 @@ final class StubResolver(
             )
           )
         )
-        condition0 = prop[HttpStub](_.method) === method &&
-          (prop[HttpStub](_.path) ==@ Refined.unsafeApply[String, NonEmpty](path) || (prop[HttpStub](
-            _.path
-          ).notExists && pathPatternExpr)) &&
-          prop[HttpStub](_.scope) === scope
+        condition0 = query[HttpStub](hs =>
+          hs.method == lift(method) && (hs.path.!! == lift(path) || (hs.path.isEmpty && unchecked(pathPatternExpr)))
+          && hs.scope == lift(scope)
+        )
+        //TODO
+        /*
         condition = (scope == Scope.Countdown).fold(
           condition0 && prop[HttpStub](_.times) > Option(refineMV[NonNegative](0)),
           condition0
-        )
-        candidates0 <- stubDAO.findChunk(condition, 0, Int.MaxValue)
+        )*/
+        candidates0 <- stubDAO.findChunk(condition0, 0, Int.MaxValue)
         _ <- ZIO.when(candidates0.isEmpty)(
           log.info("Can't find any handler for {} of type {}", path, scope) *> ZIO.fail(EarlyReturn)
         )
@@ -151,7 +151,7 @@ final class StubResolver(
       .orElse((spec, bodyXml).mapN(_.fill(_)))
       .orElse(spec)
 
-  private def findStates(id: SID[?], spec: StateSpec): RIO[WLD, Vector[PersistentState]] =
+  private def findStates[E](id: SID[E], spec: StateSpec): RIO[WLD, Vector[PersistentState]] =
     for {
       _      <- log.info("Searching state for {} by condition {}", id, spec.renderJson.noSpaces)
       states <- stateDAO.findBySpec(spec)

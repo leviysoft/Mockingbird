@@ -44,7 +44,7 @@ final class PublicHttp(handler: PublicApiHandler) {
         useRelativePaths = false,
         showExtensions = false
       )
-    ).fromEndpoints[RIO[WLD, *]](
+    ).fromEndpoints[[X] =>> RIO[WLD, X]](
       endpointsWithString ++ endpointsWithMultipart,
       "Mockingbird",
       BuildInfo.version
@@ -64,7 +64,7 @@ final class PublicHttp(handler: PublicApiHandler) {
         )
       )
       .addInterceptor(
-        RequestInterceptor.transformResult(new RequestInterceptor.RequestResultTransform[RIO[Tracing, *]] {
+        RequestInterceptor.transformResult(new RequestInterceptor.RequestResultTransform[[X] =>> RIO[Tracing, X]] {
           override def apply[B](request: ServerRequest, result: RequestResult[B]): RIO[Tracing, RequestResult[B]] =
             for {
               tracing <- ZIO.service[Tracing]

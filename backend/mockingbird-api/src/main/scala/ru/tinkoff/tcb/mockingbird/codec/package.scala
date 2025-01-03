@@ -2,6 +2,7 @@ package ru.tinkoff.tcb.mockingbird
 
 import java.nio.charset.StandardCharsets
 
+import neotype.*
 import sttp.tapir.Codec
 import sttp.tapir.CodecFormat
 import sttp.tapir.DecodeResult
@@ -17,6 +18,8 @@ import ru.tinkoff.tcb.mockingbird.model.ProxyResponse
 import ru.tinkoff.tcb.mockingbird.model.RawResponse
 import ru.tinkoff.tcb.mockingbird.model.XmlProxyResponse
 import ru.tinkoff.tcb.mockingbird.model.XmlResponse
+import ru.tinkoff.tcb.utils.xml.XMLStringSyntax
+
 
 package object codec {
   implicit val throwableCodec: Codec[String, Throwable, CodecFormat.TextPlain] =
@@ -35,7 +38,7 @@ package object codec {
         case RawResponse(_, _, body, _)     => body.getBytes(StandardCharsets.UTF_8)
         case JsonResponse(_, _, body, _, _) => body.noSpaces.getBytes(StandardCharsets.UTF_8)
         case XmlResponse(_, _, body, _, _)  => body.asString.getBytes(StandardCharsets.UTF_8)
-        case BinaryResponse(_, _, body, _)  => body.asArray
+        case BinaryResponse(_, _, body, _)  => body.unwrap
         case EmptyResponse(_, _, _)         => Array.empty
         /**
          * all *ProxyResponse are converted into RawResponse inside [[PublicApiHandler]] (see *proxyRequest methods)
