@@ -6,7 +6,7 @@ import org.mongodb.scala.bson.*
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
-trait EnumBsonHandlerHelpers { this: AnyFunSpec with Matchers =>
+trait EnumBsonHandlerHelpers { this: AnyFunSpec & Matchers =>
   def testWriter[EntryType <: ValueEnumEntry[ValueType], ValueType](
       enumKind: String,
       `enum`: ValueEnum[ValueType, EntryType],

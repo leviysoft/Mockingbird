@@ -41,7 +41,7 @@ object json {
     .instance(_.as[String])
     .emap { str =>
       Try {
-        val Duration(len, unit) = Duration(str)
+        val Duration(len, unit) = Duration(str): @unchecked
         FiniteDuration(len, unit)
       }.toEither.left.map(_.getMessage)
     }

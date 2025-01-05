@@ -31,9 +31,9 @@ import ru.tinkoff.tcb.mockingbird.model.XmlResponse
 import ru.tinkoff.tcb.mockingbird.wldRuntime
 
 final class PublicHttp(handler: PublicApiHandler) {
-  private val withString = endpointsWithString.map(_.zServerLogic[WLD]((handle _).tupled))
+  private val withString = endpointsWithString.map(_.zServerLogic[WLD](handle.tupled))
   private val withMultipart =
-    endpointsWithMultipart.map(_.zServerLogic[WLD]((handle _).tupled))
+    endpointsWithMultipart.map(_.zServerLogic[WLD](handle.tupled))
 
   private val swaggerEndpoints =
     SwaggerInterpreter(

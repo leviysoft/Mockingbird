@@ -72,7 +72,7 @@ final class ScenarioEngine(
   private val log = MDCLogging.`for`[WLD](this)
 
   def perform(source: SID[SourceConfiguration], message: String): RIO[WLD, Unit] = {
-    val f = resolver.findScenarioAndState(source, message) _
+    val f = resolver.findScenarioAndState(source, message)
 
     for {
       _ <- Tracing.update(_.addToPayload(("source" -> source)))

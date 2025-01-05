@@ -13,7 +13,7 @@ class StringTransformationsSpec extends AnyFunSuite with Matchers with TryValues
   test("Substitute JSON") {
     implicit val sandbox: GraalJsSandbox = new GraalJsSandbox(JsSandboxConfig())
 
-    "${a}" substitute (Json.obj("a" := "test")) shouldBe "test"
+    "${a}" `substitute` (Json.obj("a" := "test")) shouldBe "test"
   }
 
   test("Substitute XML") {

@@ -96,7 +96,7 @@ class GrpcRequestHandlerImpl(
       methodDescription: GrpcMethodDescription
   ): RIO[WLD, Option[(GrpcStub, Json, Array[Byte])]] =
     for {
-      f <- ZIO.succeed(stubResolver.findStubAndState(methodDescription, bytes) _)
+      f <- ZIO.succeed(stubResolver.findStubAndState(methodDescription, bytes))
       stubAndState <- f(Scope.Countdown)
         .filterOrElse(_.isDefined)(f(Scope.Ephemeral).filterOrElse(_.isDefined)(f(Scope.Persistent)))
       response <- ZIO.foreach(stubAndState) { case (stub, req, stateOp) =>

@@ -73,7 +73,7 @@ final class PublicApiHandler(
       body: RequestBody
   ): RIO[WLD, HttpStubResponse] = {
     val queryObject = queryParamsToJsonObject(query)
-    val f           = resolver.findStubAndState(method, path, headers, queryObject, body) _
+    val f           = resolver.findStubAndState(method, path, headers, queryObject, body)
 
     for {
       _ <- Tracing.update(_.addToPayload("path" -> path, "method" -> method.entryName))

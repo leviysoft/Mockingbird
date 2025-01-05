@@ -16,7 +16,7 @@ import org.mongodb.scala.bson.*
 import ru.tinkoff.tcb.utils.circe.JsonDocument
 
 package object bson {
-  private[this] def readerFailure(value: BsonValue): BsonInvalidOperationException =
+  private def readerFailure(value: BsonValue): BsonInvalidOperationException =
     new BsonInvalidOperationException(
       s"Cannot convert $value: ${value.getClass} to io.circe.Json with io.ru.tinkoff.tcb.bson",
     )
@@ -50,7 +50,7 @@ package object bson {
     // case BSONRegex(_, _) => Left(readerFailure(bson))
   }
 
-  private[this] lazy val jsonFolder: Json.Folder[Either[Throwable, BsonValue]] =
+  private lazy val jsonFolder: Json.Folder[Either[Throwable, BsonValue]] =
     new Json.Folder[Either[Throwable, BsonValue]] { self =>
       final override val onNull: Either[Throwable, BsonValue]                    = Right(BsonNull())
       final override def onBoolean(value: Boolean): Either[Throwable, BsonValue] = Right(BsonBoolean(value))

@@ -28,7 +28,7 @@ final case class Mdc(
 object Mdc {
   val empty: Mdc = Mdc()
 
-  def withPayload(kvp: (String, LoggedValue)*): Mdc = Mdc(payload = Some(Map(kvp: _*)))
+  def withPayload(kvp: (String, LoggedValue)*): Mdc = Mdc(payload = Some(Map(kvp*)))
 
   def fromJson(json: Json)(implicit lj: Loggable[Json]): Mdc =
     Mdc(payload = json.asObject.map(_.toMap.view.mapValues(Loggable[Json].loggedValue).toMap))

@@ -206,7 +206,7 @@ final class AdminApiHandler(
       body: RequestBody
   ): RIO[WLD, SID[HttpStub]] = {
     val queryObject = queryParamsToJsonObject(query)
-    val f           = stubResolver.findStubAndState(method, path, headers, queryObject, body) _
+    val f           = stubResolver.findStubAndState(method, path, headers, queryObject, body)
 
     for {
       _ <- Tracing.update(_.addToPayload("path" -> path, "method" -> method.entryName))
@@ -217,7 +217,7 @@ final class AdminApiHandler(
   }
 
   def tryResolveScenario(body: ScenarioResolveRequest): RIO[WLD, SID[Scenario]] = {
-    val f = scenarioResolver.findScenarioAndState(body.source, body.message) _
+    val f = scenarioResolver.findScenarioAndState(body.source, body.message)
 
     for {
       (scenario, _) <- f(Scope.Countdown)

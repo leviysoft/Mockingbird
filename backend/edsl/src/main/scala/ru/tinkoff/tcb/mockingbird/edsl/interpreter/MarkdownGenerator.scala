@@ -58,10 +58,10 @@ object MarkdownGenerator {
     def buildJson(cj: CheckJson): Json =
       cj match {
         case CheckJsonAny(example)    => example
-        case CheckJsonArray(items*)   => Json.arr(items.map(buildJson): _*)
+        case CheckJsonArray(items*)   => Json.arr(items.map(buildJson)*)
         case CheckJsonNull            => Json.Null
         case CheckJsonNumber(matcher) => Json.fromDoubleOrNull(matcher.value)
-        case CheckJsonObject(fields*) => Json.obj(fields.map { case (n, v) => n -> buildJson(v) }: _*)
+        case CheckJsonObject(fields*) => Json.obj(fields.map { case (n, v) => n -> buildJson(v) }*)
         case CheckJsonString(matcher) => Json.fromString(matcher.value)
       }
   }

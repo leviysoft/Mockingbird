@@ -18,7 +18,7 @@ package object api {
       query.map { case (k, vs) =>
         val js = vs.map(s => parse(s).getOrElse(Json.fromString(s))) match {
           case Seq(x) => x
-          case xs     => Json.arr(xs: _*)
+          case xs     => Json.arr(xs*)
         }
         k -> js
       }
