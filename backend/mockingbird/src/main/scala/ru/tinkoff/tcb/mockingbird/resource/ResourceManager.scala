@@ -33,7 +33,7 @@ final class ResourceManager(
       inits = sources.flatMap(_.init.map(_.toVector).getOrElse(Vector.empty)) ++ destinations.flatMap(
         _.init.map(_.toVector).getOrElse(Vector.empty)
       )
-      _ <- ZIO.validateDiscard(inits)(execute).mapError(CompoundError)
+      _ <- ZIO.validateDiscard(inits)(execute).mapError(CompoundError.apply)
     } yield ()).catchAll {
       case CompoundError(errs) if errs.forall(recover.isDefinedAt) =>
         ZIO.foreachDiscard(errs)(recover)
@@ -54,7 +54,7 @@ final class ResourceManager(
       shutdowns = sources.flatMap(_.shutdown.map(_.toVector).getOrElse(Vector.empty)) ++ destinations.flatMap(
         _.shutdown.map(_.toVector).getOrElse(Vector.empty)
       )
-      _ <- ZIO.validateDiscard(shutdowns)(execute).mapError(CompoundError)
+      _ <- ZIO.validateDiscard(shutdowns)(execute).mapError(CompoundError.apply)
     } yield ()).catchAll {
       case CompoundError(errs) if errs.forall(recover.isDefinedAt) =>
         ZIO.foreachDiscard(errs)(recover)
@@ -88,7 +88,7 @@ final class ResourceManager(
     (for {
       source <- sourceDAO.findById(sourceId).someOrFail(ResourceManagementError(s"Can't find source with id $sourceId"))
       inits = source.init.map(_.toVector).getOrElse(Vector.empty)
-      _ <- ZIO.validateDiscard(inits)(execute).mapError(CompoundError)
+      _ <- ZIO.validateDiscard(inits)(execute).mapError(CompoundError.apply)
     } yield ()).catchAll {
       case CompoundError(errs) if errs.forall(recover.isDefinedAt) =>
         ZIO.foreachDiscard(errs)(recover)
