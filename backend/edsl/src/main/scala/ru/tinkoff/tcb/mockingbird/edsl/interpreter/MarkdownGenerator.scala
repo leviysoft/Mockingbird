@@ -124,12 +124,12 @@ final class MarkdownGenerator(baseUri: Uri) {
 
         case CheckHttp(_, HttpResponseExpected(code, body, headers), _) =>
           val bodyStr = body.map(_.show)
-          val cb = Vector(
+          val cb = Vector[Option[String]](
             code.map(c => s"Response code: ${c.matcher.show}\n"),
             headers.nonEmpty.option {
               headers.map { case (k, v) => s"$k: '${v.matcher.show}'" }.mkString("Response headers:\n", "\n", "\n")
             },
-            bodyStr.map("Response body:\n" ++ _ ++ "\n"),
+            bodyStr.map(bs => "Response body:\n".concat(bs).concat("\n")),
           ).flatten.mkString("\n")
 
           Writer(

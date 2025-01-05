@@ -36,7 +36,7 @@ class MarkdownGeneratorSuite extends AnyFunSuite with Matchers {
 
     val mds = eset.describe(text).foldMap(mdg.stepsPrinterW).written
     mds should have length 1
-    mds.head.md shouldBe ("\n" ++ text ++ "\n")
+    mds.head.md shouldBe ("\n".concat(text).concat("\n"))
   }
 
   test("sendHttp produces curl command") {

@@ -153,7 +153,6 @@ lazy val `mockingbird-native` = (project in file("mockingbird-native"))
     )
   )
 
-/*
 val edsl = (project in file("edsl"))
   .dependsOn(utils, circeUtils)
   .settings(Settings.common)
@@ -169,7 +168,9 @@ val edsl = (project in file("edsl"))
     ).flatten,
     libraryDependencies ++= Seq(
       "com.softwaremill.sttp.client4" %% "circe"               % Versions.sttp,
-      "pl.muninn"                     %% "scala-md-tag"        % "0.2.3",
+      "pl.muninn"                     %% "scala-md-tag"        % "0.2.3" cross CrossVersion.for3Use2_13 excludeAll(
+        ExclusionRule("org.scala-lang.modules", "scala-collection-compat_2.13")
+      ),
     ),
   )
   .settings(
@@ -202,7 +203,7 @@ val examples = (project in file("examples"))
       "lintAll",
       "scalafixAll; scalafmtAll"
     )
-  )*/
+  )
 
 val root = (project in file("."))
   .disablePlugins(ContribWarts)
@@ -213,7 +214,7 @@ val root = (project in file("."))
     mockingbird,
     `mockingbird-api`,
     `mockingbird-native`,
-//    `edsl`
+    `edsl`
   )
   .settings(
     run / aggregate := false,

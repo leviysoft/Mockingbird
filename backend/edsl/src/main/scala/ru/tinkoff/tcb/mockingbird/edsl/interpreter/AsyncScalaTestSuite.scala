@@ -48,7 +48,7 @@ trait AsyncScalaTestSuite extends AsyncFunSuiteLike {
    */
   protected def generateTests(es: ExampleSet[HttpResponseR]): Unit =
     es.examples.foreach { desc =>
-      test(desc.name)(desc.steps.foldMap(stepsBuilder).as(succeed))(desc.pos)
+      test(desc.name)(desc.steps.foldMap(stepsBuilder).as(succeed))
     }
 
   private[interpreter] def stepsBuilder: FunctionK[Step, Future] = new (Step ~> Future) {
@@ -94,7 +94,7 @@ trait AsyncScalaTestSuite extends AsyncFunSuiteLike {
                   |Value:
                   |${value}
                   |${clue.mkString("\n")}
-                  |""".stripMargin)(pos)
+                  |""".stripMargin)
       case Valid(_) => succeed
     }
 
