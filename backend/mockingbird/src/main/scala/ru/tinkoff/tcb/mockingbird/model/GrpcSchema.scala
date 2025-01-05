@@ -57,13 +57,13 @@ final case class GrpcField(
       Schema
 
 @BsonDiscriminator("type")
-sealed trait GrpcSchema derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema {
+sealed trait GrpcSchema {
   def name: String
 }
 
 //TODO
 //@BsonDiscriminator("type")
-sealed trait GrpcRootMessage extends GrpcSchema derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema
+sealed trait GrpcRootMessage extends GrpcSchema
 
 object GrpcRootMessage {
   val modes: Map[String, String] = Map(
@@ -71,10 +71,16 @@ object GrpcRootMessage {
     nameOfType[GrpcMessageSchema] -> "message",
   ).withDefault(identity)
 
-  implicit val customConfiguration: TapirConfig =
-    TapirConfig.default.withDiscriminator("type").copy(toEncodedName = modes)
+  given TapirConfig = TapirConfig.default.withDiscriminator("type").copy(toEncodedName = modes)
 
   given CirceConfig = CirceConfig(transformConstructorNames = modes).withDiscriminator("type")
+
+  // These instances are defined as implicit defs due to Scala 3 derivation limitations
+  implicit def bd: BsonDecoder[GrpcRootMessage] = BsonDecoder.derived
+  implicit def be: BsonEncoder[GrpcRootMessage] = BsonEncoder.derived
+  implicit def enc: Encoder[GrpcRootMessage]    = Encoder.derived
+  implicit def dec: Decoder[GrpcRootMessage]    = Decoder.derived
+  implicit def sch: Schema[GrpcRootMessage]     = Schema.derived
 }
 
 object GrpcSchema {
@@ -84,10 +90,16 @@ object GrpcSchema {
     nameOfType[GrpcOneOfSchema]   -> "oneof"
   ).withDefault(identity)
 
-  implicit val customConfiguration: TapirConfig =
-    TapirConfig.default.withDiscriminator("type").copy(toEncodedName = modes)
+  given TapirConfig = TapirConfig.default.withDiscriminator("type").copy(toEncodedName = modes)
 
   given CirceConfig = CirceConfig(transformConstructorNames = modes).withDiscriminator("type")
+
+  // These instances are defined as implicit defs due to Scala 3 derivation limitations
+  implicit def bd: BsonDecoder[GrpcSchema] = BsonDecoder.derived
+  implicit def be: BsonEncoder[GrpcSchema] = BsonEncoder.derived
+  implicit def enc: Encoder[GrpcSchema]    = Encoder.derived
+  implicit def dec: Decoder[GrpcSchema]    = Decoder.derived
+  implicit def sch: Schema[GrpcSchema]     = Schema.derived
 }
 
 final case class GrpcMessageSchema(
@@ -97,13 +109,15 @@ final case class GrpcMessageSchema(
     nested: Option[List[GrpcMessageSchema]] = None,
     nestedEnums: Option[List[GrpcEnumSchema]] = None,
 ) extends GrpcRootMessage
-    derives BsonDecoder,
-      BsonEncoder,
-      Decoder,
-      Encoder,
-      Schema
 
-object GrpcMessageSchema
+object GrpcMessageSchema {
+  // These instances are defined as implicit defs due to Scala 3 derivation limitations
+  implicit def bd: BsonDecoder[GrpcMessageSchema] = BsonDecoder.derived
+  implicit def be: BsonEncoder[GrpcMessageSchema] = BsonEncoder.derived
+  implicit def enc: Encoder[GrpcMessageSchema]    = Encoder.derived
+  implicit def dec: Decoder[GrpcMessageSchema]    = Decoder.derived
+  implicit def sch: Schema[GrpcMessageSchema]     = Schema.derived
+}
 
 final case class GrpcEnumSchema(
     name: String,
