@@ -73,7 +73,7 @@ object Dependencies {
   lazy val testContainers = Seq(
     "testcontainers-scala-scalatest",
     "testcontainers-scala-mongodb",
-  ).map("com.dimafeng" %% _ % "0.41.0" % Test)
+  ).map("com.dimafeng" %% _ % "0.41.5" % Test)
 
   lazy val refined = Seq(
     "eu.timepit" %% "refined" % "0.11.3"
