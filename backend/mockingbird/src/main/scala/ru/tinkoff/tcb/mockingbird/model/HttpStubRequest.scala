@@ -2,7 +2,6 @@ package ru.tinkoff.tcb.mockingbird.model
 
 import scala.util.Try
 import scala.xml.Node
-import scala.xml.NodeSeq
 
 import com.github.dwickern.macros.NameOf.*
 import io.circe.Decoder
@@ -12,13 +11,13 @@ import io.circe.JsonObject
 import io.circe.derivation.Configuration as CirceConfig
 import io.circe.parser.parse
 import neotype.*
+import oolong.bson.*
+import oolong.bson.annotation.BsonDiscriminator
+import oolong.bson.given
 import sttp.model.Part
 import sttp.tapir.Schema
 import sttp.tapir.generic.Configuration as TapirConfig
 
-import oolong.bson.*
-import oolong.bson.given
-import oolong.bson.annotation.BsonDiscriminator
 import ru.tinkoff.tcb.circe.bson.*
 import ru.tinkoff.tcb.predicatedsl.Keyword
 import ru.tinkoff.tcb.predicatedsl.form.FormPredicate
@@ -82,7 +81,9 @@ final case class JsonRequest(
     headers: Map[String, String],
     query: Map[JsonOptic, Map[Keyword.Json, Json]] = Map.empty,
     body: Json
-) extends HttpStubRequest derives Decoder, Encoder {
+) extends HttpStubRequest
+    derives Decoder,
+      Encoder {
   override def checkBody(rBody: RequestBody): Boolean =
     extractJson(rBody).contains(body)
 
@@ -100,7 +101,9 @@ final case class XmlRequest(
     body: XMLString.Type,
     extractors: Map[String, XmlExtractor] = Map.empty,
     inlineCData: Boolean = false
-) extends HttpStubRequest derives Decoder, Encoder {
+) extends HttpStubRequest
+    derives Decoder,
+      Encoder {
   override def checkBody(rBody: RequestBody): Boolean =
     extractXML(rBody).contains(body.unwrap)
 
@@ -123,7 +126,9 @@ final case class RawRequest(
     headers: Map[String, String],
     query: Map[JsonOptic, Map[Keyword.Json, Json]] = Map.empty,
     body: String
-) extends HttpStubRequest derives Decoder, Encoder {
+) extends HttpStubRequest
+    derives Decoder,
+      Encoder {
   override def checkBody(rBody: RequestBody): Boolean =
     SimpleRequestBody.subset.getOption(rBody).map(_.value).contains(body)
 
@@ -138,7 +143,9 @@ final case class JLensRequest(
     headers: Map[String, String],
     query: Map[JsonOptic, Map[Keyword.Json, Json]] = Map.empty,
     body: JsonPredicate
-) extends HttpStubRequest derives Decoder, Encoder {
+) extends HttpStubRequest
+    derives Decoder,
+      Encoder {
   override def checkBody(rBody: RequestBody): Boolean =
     extractJson(rBody).map(body).getOrElse(false)
 
@@ -156,7 +163,9 @@ final case class XPathRequest(
     body: XmlPredicate,
     extractors: Map[String, XmlExtractor] = Map.empty,
     inlineCData: Boolean = false
-) extends HttpStubRequest derives Decoder, Encoder {
+) extends HttpStubRequest
+    derives Decoder,
+      Encoder {
   override def checkBody(rBody: RequestBody): Boolean =
     extractXML(rBody).map(body).getOrElse(false)
 
@@ -179,7 +188,9 @@ final case class WebFormRequest(
     headers: Map[String, String],
     query: Map[JsonOptic, Map[Keyword.Json, Json]] = Map.empty,
     body: FormPredicate
-) extends HttpStubRequest derives Decoder, Encoder {
+) extends HttpStubRequest
+    derives Decoder,
+      Encoder {
   private def extractForm(rBody: RequestBody) =
     SimpleRequestBody.subset.getOption(rBody).map(_.value).map(decodeForm)
 
@@ -197,7 +208,9 @@ final case class WebFormRequest(
 final case class RequestWithoutBody(
     headers: Map[String, String],
     query: Map[JsonOptic, Map[Keyword.Json, Json]] = Map.empty
-) extends HttpStubRequest derives Decoder, Encoder {
+) extends HttpStubRequest
+    derives Decoder,
+      Encoder {
   override def checkBody(rBody: RequestBody): Boolean =
     AbsentRequestBody.subset.getOption(rBody).isDefined ||
       SimpleRequestBody.subset.getOption(rBody).exists(_.value.isEmpty)
@@ -212,7 +225,9 @@ final case class RequestWithoutBody(
 final case class RequestWithAnyBody(
     headers: Map[String, String],
     query: Map[JsonOptic, Map[Keyword.Json, Json]] = Map.empty
-) extends HttpStubRequest derives Decoder, Encoder {
+) extends HttpStubRequest
+    derives Decoder,
+      Encoder {
   override def checkBody(rBody: RequestBody): Boolean =
     SimpleRequestBody.subset.getOption(rBody).exists(_.value.nonEmpty)
 
@@ -277,7 +292,9 @@ final case class RawPart(headers: Map[String, String], body: String) extends Req
   override def extractXML(body: String): Option[Node] = None
 }
 
-final case class UrlEncodedPart(headers: Map[String, String], body: FormPredicate) extends RequestPart derives Decoder, Encoder {
+final case class UrlEncodedPart(headers: Map[String, String], body: FormPredicate) extends RequestPart
+    derives Decoder,
+      Encoder {
   override def checkBody(value: String): Boolean = body(decodeForm(value))
 
   override def extractJson(body: String): Option[Json] = Option(toJson(decodeForm(body)))
@@ -293,7 +310,9 @@ final case class JsonPart(headers: Map[String, String], body: Json) extends Requ
   override def extractXML(body: String): Option[Node] = None
 }
 
-final case class XMLPart(headers: Map[String, String], body: XMLString.Type) extends RequestPart derives Decoder, Encoder {
+final case class XMLPart(headers: Map[String, String], body: XMLString.Type) extends RequestPart
+    derives Decoder,
+      Encoder {
   override def checkBody(value: String): Boolean = Try(SafeXML.loadString(value)).exists(_ == body.unwrap)
 
   override def extractJson(body: String): Option[Json] = None
@@ -301,7 +320,9 @@ final case class XMLPart(headers: Map[String, String], body: XMLString.Type) ext
   override def extractXML(body: String): Option[Node] = Try(SafeXML.loadString(body)).toOption
 }
 
-final case class JLensPart(headers: Map[String, String], body: JsonPredicate) extends RequestPart derives Decoder, Encoder {
+final case class JLensPart(headers: Map[String, String], body: JsonPredicate) extends RequestPart
+    derives Decoder,
+      Encoder {
   override def checkBody(value: String): Boolean = parse(value).map(body).getOrElse(false)
 
   override def extractJson(body: String): Option[Json] = parse(body).toOption
@@ -309,7 +330,9 @@ final case class JLensPart(headers: Map[String, String], body: JsonPredicate) ex
   override def extractXML(body: String): Option[Node] = None
 }
 
-final case class XPathPart(headers: Map[String, String], body: XmlPredicate) extends RequestPart derives Decoder, Encoder {
+final case class XPathPart(headers: Map[String, String], body: XmlPredicate) extends RequestPart
+    derives Decoder,
+      Encoder {
   override def checkBody(value: String): Boolean = Try(SafeXML.loadString(value)).map(body).getOrElse(false)
 
   override def extractJson(body: String): Option[Json] = None
@@ -322,7 +345,9 @@ final case class MultipartRequest(
     query: Map[JsonOptic, Map[Keyword.Json, Json]] = Map.empty,
     body: Map[String, RequestPart],
     bypassUnknownParts: Boolean = true
-) extends HttpStubRequest derives Decoder, Encoder {
+) extends HttpStubRequest
+    derives Decoder,
+      Encoder {
   override def checkBody(rBody: RequestBody): Boolean =
     MultipartRequestBody.subset.getOption(rBody).exists { requestBody =>
       requestBody.value.forall { requestBodyPart =>

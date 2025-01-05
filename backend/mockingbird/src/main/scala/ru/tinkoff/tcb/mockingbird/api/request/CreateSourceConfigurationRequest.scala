@@ -3,8 +3,8 @@ package ru.tinkoff.tcb.mockingbird.api.request
 import cats.data.NonEmptyVector
 import io.circe.Decoder
 import io.circe.Encoder
-import sttp.tapir.Schema.annotations.description
 import sttp.tapir.Schema
+import sttp.tapir.Schema.annotations.description
 
 import ru.tinkoff.tcb.generic.PropSubset
 import ru.tinkoff.tcb.mockingbird.model.EventSourceRequest
@@ -28,7 +28,9 @@ final case class CreateSourceConfigurationRequest(
     shutdown: Option[NonEmptyVector[ResourceRequest]],
     @description("Reinitialization triggers specification")
     reInitTriggers: Option[NonEmptyVector[ResponseSpec]]
-) derives Decoder, Encoder, Schema
+) derives Decoder,
+      Encoder,
+      Schema
 
 object CreateSourceConfigurationRequest {
   implicitly[PropSubset[CreateSourceConfigurationRequest, SourceConfiguration]]

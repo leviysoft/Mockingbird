@@ -1,12 +1,12 @@
 package ru.tinkoff.tcb.mockingbird.api.request
 
+import eu.timepit.refined.types.string.NonEmptyString
 import io.circe.Decoder
 import io.circe.Encoder
-import eu.timepit.refined.types.string.NonEmptyString
 import io.circe.refined.*
+import sttp.tapir.Schema
 import sttp.tapir.Schema.annotations.description
 import sttp.tapir.codec.refined.*
-import sttp.tapir.Schema
 
 import ru.tinkoff.tcb.mockingbird.model.ByteArray
 import ru.tinkoff.tcb.mockingbird.model.GrpcConnectionType
@@ -34,4 +34,6 @@ final case class CreateGrpcMethodDescriptionRequest(
     responseClass: String,
     @description("gRPC base64 encoded response proto")
     responseCodecs: ByteArray.Type
-) derives Decoder, Encoder, Schema
+) derives Decoder,
+      Encoder,
+      Schema

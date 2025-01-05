@@ -35,15 +35,27 @@ final class EphemeralCleaner(
       current <- ZIO.clock.flatMap(_.instant)
       threshold = current.minusSeconds(secondsInDay)
       deleted <- stubDAO.delete(
-        query[HttpStub](hs => Set[Scope](lift(Scope.Ephemeral), lift(Scope.Countdown)).contains(hs.scope) && hs.created.isBefore(lift(threshold)))
+        query[HttpStub](hs =>
+          Set[Scope](lift(Scope.Ephemeral), lift(Scope.Countdown)).contains(hs.scope) && hs.created.isBefore(
+            lift(threshold)
+          )
+        )
       )
       _ <- log.info("Purging expired stubs: {} deleted", deleted)
       deleted2 <- scenarioDAO.delete(
-        query[Scenario](s => Set[Scope](lift(Scope.Ephemeral), lift(Scope.Countdown)).contains(s.scope) && s.created.isBefore(lift(threshold)))
+        query[Scenario](s =>
+          Set[Scope](lift(Scope.Ephemeral), lift(Scope.Countdown)).contains(s.scope) && s.created.isBefore(
+            lift(threshold)
+          )
+        )
       )
       _ <- log.info("Purging expired scenarios: {} deleted", deleted2)
       deleted3 <- grpcStubDAO.delete(
-        query[GrpcStub](gs => Set[Scope](lift(Scope.Ephemeral), lift(Scope.Countdown)).contains(gs.scope) && gs.created.isBefore(lift(threshold)))
+        query[GrpcStub](gs =>
+          Set[Scope](lift(Scope.Ephemeral), lift(Scope.Countdown)).contains(gs.scope) && gs.created.isBefore(
+            lift(threshold)
+          )
+        )
       )
       _ <- log.info("Purging expired grpc stubs: {} deleted", deleted3)
       deleted4 <- stubDAO.delete(

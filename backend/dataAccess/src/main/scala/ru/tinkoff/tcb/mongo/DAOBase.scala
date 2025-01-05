@@ -1,6 +1,9 @@
 package ru.tinkoff.tcb.mongo
 
 import scala.jdk.CollectionConverters.*
+
+import oolong.bson.*
+import oolong.bson.given
 import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.MongoCollection
 import org.mongodb.scala.Observer
@@ -9,8 +12,7 @@ import org.mongodb.scala.bson.*
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.changestream.*
-import oolong.bson.*
-import oolong.bson.given
+
 import ru.tinkoff.tcb.bson.PatchGenerator
 import ru.tinkoff.tcb.dataaccess.UpdateResult
 import ru.tinkoff.tcb.generic.Fields

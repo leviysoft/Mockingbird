@@ -1,6 +1,7 @@
 package ru.tinkoff.tcb.mockingbird.config
 
 import scala.concurrent.duration.FiniteDuration
+
 import com.github.dwickern.macros.NameOf.*
 import com.typesafe.config.Config
 import enumeratum.*
@@ -12,8 +13,8 @@ import pureconfig.generic.semiauto.*
 final case class JsSandboxConfig(allowedClasses: Set[String] = Set())
 
 object JsSandboxConfig {
-    given ProductHint[JsSandboxConfig] = ProductHint[JsSandboxConfig](ConfigFieldMapping(CamelCase, CamelCase))
-    given ConfigReader[JsSandboxConfig] = deriveReader
+  given ProductHint[JsSandboxConfig] = ProductHint[JsSandboxConfig](ConfigFieldMapping(CamelCase, CamelCase))
+  given ConfigReader[JsSandboxConfig] = deriveReader
 }
 
 final case class ServerConfig(
@@ -26,8 +27,8 @@ final case class ServerConfig(
 )
 
 object ServerConfig {
-    given ProductHint[ServerConfig] = ProductHint[ServerConfig](ConfigFieldMapping(CamelCase, CamelCase))
-    given ConfigReader[ServerConfig] = deriveReader
+  given ProductHint[ServerConfig] = ProductHint[ServerConfig](ConfigFieldMapping(CamelCase, CamelCase))
+  given ConfigReader[ServerConfig] = deriveReader
 }
 
 final case class SecurityConfig(secret: String) derives ConfigReader
@@ -133,8 +134,8 @@ final case class MockingbirdConfiguration(
 ) derives ConfigReader
 
 object MockingbirdConfiguration {
-  //implicit private def hint[T]: ProductHint[T] =
-    //ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
+  // implicit private def hint[T]: ProductHint[T] =
+  // ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
 
   def load(): MockingbirdConfiguration =
     load(ConfigSource.default.at("ru.tinkoff.tcb"))

@@ -1,14 +1,13 @@
 package ru.tinkoff.tcb.utils.id
 
+import com.softwaremill.tagging.*
 import glass.Equivalent
 import io.circe.*
+import oolong.bson.*
 import pureconfig.ConfigReader
-import com.softwaremill.tagging.*
 import sttp.tapir.Schema
 import tofu.logging.Loggable
 
-import oolong.bson.*
-import oolong.bson.given
 import ru.tinkoff.tcb.generic.PropSubset
 import ru.tinkoff.tcb.generic.RootOptionFields
 

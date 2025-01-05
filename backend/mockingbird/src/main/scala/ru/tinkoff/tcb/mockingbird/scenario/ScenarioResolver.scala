@@ -5,7 +5,6 @@ import scala.xml.Node
 import eu.timepit.refined.*
 import eu.timepit.refined.numeric.*
 import io.circe.Json
-import mouse.boolean.*
 import mouse.option.*
 import oolong.bson.*
 import oolong.bson.given
@@ -43,8 +42,9 @@ class ScenarioResolver(
   ): RIO[WLD, Option[(Scenario, Option[PersistentState])]] =
     (for {
       _ <- log.info("Searching for scenarios for source {} of type {}", source, scope)
-      condition0 = if (scope != Scope.Countdown) query[Scenario](s => s.source == lift(source) && s.scope == lift(scope))
-                   else query[Scenario](s => s.source == lift(source) && s.scope == lift(scope) && s.times.!! > 0)
+      condition0 =
+        if (scope != Scope.Countdown) query[Scenario](s => s.source == lift(source) && s.scope == lift(scope))
+        else query[Scenario](s => s.source == lift(source) && s.scope == lift(scope) && s.times.!! > 0)
       scenarios0 <- scenarioDAO.findChunk(condition0, 0, Int.MaxValue)
       _ <- ZIO.when(scenarios0.isEmpty)(
         log.info("No handlers found for source {} of type {}", source, scope) *>

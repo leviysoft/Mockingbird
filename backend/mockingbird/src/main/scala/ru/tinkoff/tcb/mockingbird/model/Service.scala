@@ -1,6 +1,7 @@
 package ru.tinkoff.tcb.mockingbird.model
 
-import io.circe.{Decoder, Encoder}
+import io.circe.Decoder
+import io.circe.Encoder
 import oolong.bson.BsonDecoder
 import oolong.bson.BsonEncoder
 import oolong.bson.given

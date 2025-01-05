@@ -2,9 +2,11 @@ package ru.tinkoff.tcb.utils
 
 import java.util.UUID
 import scala.util.Success
+
 import io.circe.KeyDecoder
 import io.circe.KeyEncoder
-import oolong.bson.{BsonKeyDecoder, BsonKeyEncoder}
+import oolong.bson.BsonKeyDecoder
+import oolong.bson.BsonKeyEncoder
 import sttp.tapir.Codec
 import sttp.tapir.CodecFormat
 

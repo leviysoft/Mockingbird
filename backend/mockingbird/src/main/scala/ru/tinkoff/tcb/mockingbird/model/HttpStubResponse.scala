@@ -2,6 +2,7 @@ package ru.tinkoff.tcb.mockingbird.model
 
 import scala.concurrent.duration.FiniteDuration
 import scala.xml.Node
+
 import com.github.dwickern.macros.NameOf.*
 import glass.Contains
 import glass.Property
@@ -13,14 +14,15 @@ import io.circe.Encoder
 import io.circe.Json
 import io.circe.derivation.Configuration as CirceConfig
 import io.circe.refined.*
-import sttp.tapir.codec.refined.*
-import sttp.tapir.Schema
-import sttp.tapir.generic.Configuration as TapirConfig
 import neotype.*
 import oolong.bson.*
 import oolong.bson.annotation.BsonDiscriminator
 import oolong.bson.given
 import oolong.bson.refined.given
+import sttp.tapir.Schema
+import sttp.tapir.codec.refined.*
+import sttp.tapir.generic.Configuration as TapirConfig
+
 import ru.tinkoff.tcb.circe.bson.*
 import ru.tinkoff.tcb.protocol.bson.*
 import ru.tinkoff.tcb.protocol.json.*
@@ -72,7 +74,9 @@ final case class EmptyResponse(
     code: HttpStatusCode,
     headers: Map[String, String],
     delay: Option[FiniteDuration]
-) extends HttpStubResponse derives Decoder, Encoder{
+) extends HttpStubResponse
+    derives Decoder,
+      Encoder {
   val isTemplate: Boolean = false
 }
 
@@ -87,7 +91,9 @@ final case class RawResponse(
     headers: Map[String, String],
     body: String,
     delay: Option[FiniteDuration]
-) extends HttpStubResponse derives Decoder, Encoder {
+) extends HttpStubResponse
+    derives Decoder,
+      Encoder {
   val isTemplate: Boolean = false
 }
 
@@ -172,7 +178,9 @@ final case class BinaryResponse(
     headers: Map[String, String],
     body: ByteArray.Type,
     delay: Option[FiniteDuration]
-) extends HttpStubResponse derives Decoder, Encoder {
+) extends HttpStubResponse
+    derives Decoder,
+      Encoder {
   val isTemplate: Boolean = false
 }
 
@@ -186,7 +194,9 @@ final case class ProxyResponse(
     uri: String,
     delay: Option[FiniteDuration],
     timeout: Option[FiniteDuration]
-) extends HttpStubResponse derives Decoder, Encoder {
+) extends HttpStubResponse
+    derives Decoder,
+      Encoder {
   val isTemplate: Boolean = false
 }
 
@@ -195,7 +205,9 @@ final case class JsonProxyResponse(
     patch: Map[JsonOptic, String],
     delay: Option[FiniteDuration],
     timeout: Option[FiniteDuration]
-) extends HttpStubResponse derives Decoder, Encoder {
+) extends HttpStubResponse
+    derives Decoder,
+      Encoder {
   val isTemplate: Boolean = false
 }
 
@@ -204,7 +216,9 @@ final case class XmlProxyResponse(
     patch: Map[SXpath, String],
     delay: Option[FiniteDuration],
     timeout: Option[FiniteDuration]
-) extends HttpStubResponse derives Decoder, Encoder {
+) extends HttpStubResponse
+    derives Decoder,
+      Encoder {
   val isTemplate: Boolean = false
 }
 

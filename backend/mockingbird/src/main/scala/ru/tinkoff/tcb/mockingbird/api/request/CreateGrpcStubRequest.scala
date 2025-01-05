@@ -1,17 +1,17 @@
 package ru.tinkoff.tcb.mockingbird.api.request
 
-import io.circe.Decoder
-import io.circe.Encoder
 import eu.timepit.refined.*
 import eu.timepit.refined.auto.*
 import eu.timepit.refined.numeric.*
 import eu.timepit.refined.types.numeric.*
 import eu.timepit.refined.types.string.NonEmptyString
+import io.circe.Decoder
+import io.circe.Encoder
 import io.circe.Json
 import io.circe.refined.*
+import sttp.tapir.Schema
 import sttp.tapir.Schema.annotations.description
 import sttp.tapir.codec.refined.*
-import sttp.tapir.Schema
 
 import ru.tinkoff.tcb.mockingbird.model.ByteArray
 import ru.tinkoff.tcb.mockingbird.model.GrpcStubResponse
@@ -53,4 +53,6 @@ final case class CreateGrpcStubRequest(
     persist: Option[Map[JsonOptic, Json]],
     @description("Tags")
     labels: Seq[String] = Seq.empty
-) derives Decoder, Encoder, Schema
+) derives Decoder,
+      Encoder,
+      Schema

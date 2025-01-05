@@ -2,6 +2,7 @@ package ru.tinkoff.tcb.mockingbird
 
 import java.util.Base64
 import scala.util.Try
+
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.numeric.*
 import io.circe.Decoder
@@ -9,11 +10,15 @@ import io.circe.Encoder
 import io.circe.KeyDecoder
 import io.circe.KeyEncoder
 import neotype.*
-import oolong.bson.{BsonDecoder, BsonEncoder, BsonKeyDecoder, BsonKeyEncoder}
+import oolong.bson.BsonDecoder
+import oolong.bson.BsonEncoder
+import oolong.bson.BsonKeyDecoder
+import oolong.bson.BsonKeyEncoder
 import oolong.bson.given
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.bson.BsonString
 import sttp.tapir.Schema
+
 import ru.tinkoff.tcb.generic.RootOptionFields
 import ru.tinkoff.tcb.utils.crypto.AES
 

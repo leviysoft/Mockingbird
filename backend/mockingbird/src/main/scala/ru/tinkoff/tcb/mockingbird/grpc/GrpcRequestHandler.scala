@@ -4,7 +4,6 @@ import io.circe.Json
 import io.circe.syntax.KeyOps
 import io.grpc.StatusException
 import mouse.option.*
-import oolong.bson.*
 import oolong.bson.given
 import oolong.dsl.*
 import oolong.mongo.*
@@ -23,7 +22,8 @@ import ru.tinkoff.tcb.mockingbird.dal.GrpcStubDAO
 import ru.tinkoff.tcb.mockingbird.dal.PersistentStateDAO
 import ru.tinkoff.tcb.mockingbird.error.StubSearchError
 import ru.tinkoff.tcb.mockingbird.error.ValidationError
-import ru.tinkoff.tcb.mockingbird.grpc.GrpcExractor.{convertMessageToJson, parseFromJson}
+import ru.tinkoff.tcb.mockingbird.grpc.GrpcExractor.convertMessageToJson
+import ru.tinkoff.tcb.mockingbird.grpc.GrpcExractor.parseFromJson
 import ru.tinkoff.tcb.mockingbird.misc.Renderable.ops.*
 import ru.tinkoff.tcb.mockingbird.model.FillResponse
 import ru.tinkoff.tcb.mockingbird.model.FillStreamResponse
@@ -36,7 +36,6 @@ import ru.tinkoff.tcb.mockingbird.model.NoBodyResponse
 import ru.tinkoff.tcb.mockingbird.model.PersistentState
 import ru.tinkoff.tcb.mockingbird.model.RepeatResponse
 import ru.tinkoff.tcb.mockingbird.model.Scope
-import ru.tinkoff.tcb.protocol.log.*
 import ru.tinkoff.tcb.utils.sandboxing.GraalJsSandbox
 import ru.tinkoff.tcb.utils.transformation.json.*
 
@@ -117,7 +116,9 @@ class GrpcRequestHandlerImpl(
             .map(_.keys.map(_.path).filter(_.startsWith("_")).toVector)
             .filter(_.nonEmpty)
             .cata(_.traverse(stateDAO.createIndexForDataField), ZIO.unit)
-          _ <- ZIO.when(stub.scope == Scope.Countdown)(stubDAO.updateById(stub.id, Document("$inc" -> Document("times" -> (-1).bson))))
+          _ <- ZIO.when(stub.scope == Scope.Countdown)(
+            stubDAO.updateById(stub.id, Document("$inc" -> Document("times" -> -1.bson)))
+          )
         } yield (stub, data, bytes)
       }
     } yield response

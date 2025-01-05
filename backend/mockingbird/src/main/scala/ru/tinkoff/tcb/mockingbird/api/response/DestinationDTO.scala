@@ -11,8 +11,12 @@ import sttp.tapir.Schema
 import ru.tinkoff.tcb.mockingbird.model.DestinationConfiguration
 import ru.tinkoff.tcb.utils.id.SID
 
-final case class DestinationDTO(name: SID[DestinationConfiguration], description: String) derives Encoder, Decoder, Schema, BsonDecoder
+final case class DestinationDTO(name: SID[DestinationConfiguration], description: String)
+    derives Encoder,
+      Decoder,
+      Schema,
+      BsonDecoder
 
 object DestinationDTO {
-    inline given QueryMeta[DestinationConfiguration] = queryMeta(_.name -> "_id")
+  inline given QueryMeta[DestinationConfiguration] = queryMeta(_.name -> "_id")
 }

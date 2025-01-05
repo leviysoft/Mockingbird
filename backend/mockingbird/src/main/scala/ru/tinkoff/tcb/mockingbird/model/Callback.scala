@@ -1,16 +1,18 @@
 package ru.tinkoff.tcb.mockingbird.model
 
 import scala.concurrent.duration.FiniteDuration
+
 import com.github.dwickern.macros.NameOf.*
 import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.Json
 import io.circe.derivation.Configuration as CirceConfig
+import oolong.bson.*
+import oolong.bson.annotation.BsonDiscriminator
+import oolong.bson.given
 import sttp.tapir.Schema
 import sttp.tapir.generic.Configuration as TapirConfig
-import oolong.bson.*
-import oolong.bson.given
-import oolong.bson.annotation.BsonDiscriminator
+
 import ru.tinkoff.tcb.circe.bson.*
 import ru.tinkoff.tcb.protocol.bson.*
 import ru.tinkoff.tcb.protocol.json.*
@@ -37,8 +39,8 @@ object Callback {
 
   given BsonDecoder[Callback] = BsonDecoder.derived
   given BsonEncoder[Callback] = BsonEncoder.derived
-  given Encoder[Callback]     = Encoder.derived
-  given Decoder[Callback]     = Decoder.derived
+  given Encoder[Callback] = Encoder.derived
+  given Decoder[Callback] = Decoder.derived
 }
 
 final case class MessageCallback(

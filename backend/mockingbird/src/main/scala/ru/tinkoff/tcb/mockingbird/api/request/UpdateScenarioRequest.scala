@@ -1,21 +1,21 @@
 package ru.tinkoff.tcb.mockingbird.api.request
 
-import io.circe.Decoder
-import io.circe.Encoder
 import eu.timepit.refined.*
 import eu.timepit.refined.numeric.*
 import eu.timepit.refined.types.numeric.*
 import eu.timepit.refined.types.string.NonEmptyString
+import io.circe.Decoder
+import io.circe.Encoder
 import io.circe.Json
 import io.circe.refined.*
 import oolong.bson.*
 import oolong.bson.given
-import oolong.bson.refined.given
 import oolong.bson.meta.QueryMeta
 import oolong.bson.meta.queryMeta
+import oolong.bson.refined.given
+import sttp.tapir.Schema
 import sttp.tapir.Schema.annotations.description
 import sttp.tapir.codec.refined.*
-import sttp.tapir.Schema
 
 import ru.tinkoff.tcb.circe.bson.*
 import ru.tinkoff.tcb.generic.PropSubset
@@ -58,7 +58,9 @@ final case class UpdateScenarioRequest(
     callback: Option[Callback],
     @description("Tags")
     labels: Seq[String]
-) derives Decoder, Encoder, Schema
+) derives Decoder,
+      Encoder,
+      Schema
 object UpdateScenarioRequest {
   implicitly[PropSubset[UpdateScenarioRequest, ScenarioPatch]]
 }

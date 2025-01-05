@@ -20,7 +20,6 @@ import ru.tinkoff.tcb.mockingbird.model.XmlProxyResponse
 import ru.tinkoff.tcb.mockingbird.model.XmlResponse
 import ru.tinkoff.tcb.utils.xml.XMLStringSyntax
 
-
 package object codec {
   implicit val throwableCodec: Codec[String, Throwable, CodecFormat.TextPlain] =
     Codec.string.map[Throwable](new Exception(_: String))(_.toString)

@@ -1,22 +1,23 @@
 package ru.tinkoff.tcb.mockingbird.model
 
 import scala.xml.Node
+
 import com.github.dwickern.macros.NameOf.nameOfType
 import eu.timepit.refined.types.string.NonEmptyString
 import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.Json
 import io.circe.derivation.Configuration as CirceConfig
-import io.circe.Json
 import io.circe.refined.*
 import neotype.*
 import oolong.bson.*
 import oolong.bson.annotation.BsonDiscriminator
 import oolong.bson.given
 import oolong.bson.refined.given
-import sttp.tapir.codec.refined.*
 import sttp.tapir.Schema
+import sttp.tapir.codec.refined.*
 import sttp.tapir.generic.Configuration as TapirConfig
+
 import ru.tinkoff.tcb.circe.bson.*
 import ru.tinkoff.tcb.protocol.bson.*
 import ru.tinkoff.tcb.protocol.schema.*
@@ -47,27 +48,35 @@ final case class CallbackRequestWithoutBody(
     url: NonEmptyString,
     method: HttpMethod,
     headers: Map[String, String]
-) extends CallbackRequest derives Decoder, Encoder
+) extends CallbackRequest
+    derives Decoder,
+      Encoder
 
 final case class RawCallbackRequest(
     url: NonEmptyString,
     method: HttpMethod,
     headers: Map[String, String],
     body: String
-) extends CallbackRequest derives Decoder, Encoder
+) extends CallbackRequest
+    derives Decoder,
+      Encoder
 
 final case class JsonCallbackRequest(
     url: NonEmptyString,
     method: HttpMethod,
     headers: Map[String, String],
     body: Json
-) extends CallbackRequest derives Decoder, Encoder
+) extends CallbackRequest
+    derives Decoder,
+      Encoder
 
 final case class XMLCallbackRequest(
     url: NonEmptyString,
     method: HttpMethod,
     headers: Map[String, String],
     body: XMLString.Type
-) extends CallbackRequest derives Decoder, Encoder {
+) extends CallbackRequest
+    derives Decoder,
+      Encoder {
   lazy val node: Node = body.unwrap
 }

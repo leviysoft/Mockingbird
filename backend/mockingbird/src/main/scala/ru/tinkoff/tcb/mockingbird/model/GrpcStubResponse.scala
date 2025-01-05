@@ -1,13 +1,15 @@
 package ru.tinkoff.tcb.mockingbird.model
 
 import scala.concurrent.duration.FiniteDuration
+
 import com.github.dwickern.macros.NameOf.*
 import eu.timepit.refined.types.numeric.PosInt
 import glass.Contains
 import glass.Subset
 import glass.macros.GenContains
 import glass.macros.GenSubset
-import io.circe.{Decoder, Encoder}
+import io.circe.Decoder
+import io.circe.Encoder
 import io.circe.Json
 import io.circe.derivation.Configuration as CirceConfig
 import io.circe.refined.*
@@ -15,9 +17,10 @@ import oolong.bson.*
 import oolong.bson.annotation.BsonDiscriminator
 import oolong.bson.given
 import oolong.bson.refined.given
-import sttp.tapir.codec.refined.*
 import sttp.tapir.Schema
+import sttp.tapir.codec.refined.*
 import sttp.tapir.generic.Configuration as TapirConfig
+
 import ru.tinkoff.tcb.circe.bson.*
 import ru.tinkoff.tcb.protocol.bson.*
 import ru.tinkoff.tcb.protocol.json.*
@@ -47,19 +50,25 @@ object GrpcStubResponse {
 final case class FillResponse(
     data: Json,
     delay: Option[FiniteDuration]
-) extends GrpcStubResponse derives Decoder, Encoder
+) extends GrpcStubResponse
+    derives Decoder,
+      Encoder
 
 final case class FillStreamResponse(
     data: Vector[Json],
     delay: Option[FiniteDuration],
     streamDelay: Option[FiniteDuration]
-) extends GrpcStubResponse derives Decoder, Encoder
+) extends GrpcStubResponse
+    derives Decoder,
+      Encoder
 
 final case class GProxyResponse(
     endpoint: Option[String],
     patch: Map[JsonOptic, String],
     delay: Option[FiniteDuration]
-) extends GrpcStubResponse derives Decoder, Encoder
+) extends GrpcStubResponse
+    derives Decoder,
+      Encoder
 
 object GProxyResponse {
   val prism: Subset[GrpcStubResponse, GProxyResponse] = GenSubset[GrpcStubResponse, GProxyResponse]
@@ -69,11 +78,15 @@ object GProxyResponse {
 
 final case class NoBodyResponse(
     delay: Option[FiniteDuration]
-) extends GrpcStubResponse derives Decoder, Encoder
+) extends GrpcStubResponse
+    derives Decoder,
+      Encoder
 
 final case class RepeatResponse(
     data: Json,
     repeats: PosInt,
     delay: Option[FiniteDuration],
     streamDelay: Option[FiniteDuration]
-) extends GrpcStubResponse derives Decoder, Encoder
+) extends GrpcStubResponse
+    derives Decoder,
+      Encoder

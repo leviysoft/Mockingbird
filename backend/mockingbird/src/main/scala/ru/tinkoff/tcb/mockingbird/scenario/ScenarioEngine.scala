@@ -10,10 +10,7 @@ import io.circe.syntax.*
 import mouse.boolean.*
 import mouse.option.*
 import neotype.*
-import oolong.bson.*
 import oolong.bson.given
-import oolong.dsl.*
-import oolong.mongo.*
 import org.mongodb.scala.bson.Document
 import sttp.client4.{Backend as SttpBackend, *}
 import sttp.client4.circe.*
@@ -45,15 +42,14 @@ import ru.tinkoff.tcb.mockingbird.model.SourceConfiguration
 import ru.tinkoff.tcb.mockingbird.model.XMLCallbackRequest
 import ru.tinkoff.tcb.mockingbird.model.XmlOutput
 import ru.tinkoff.tcb.mockingbird.stream.SDFetcher
-import ru.tinkoff.tcb.protocol.log.*
 import ru.tinkoff.tcb.utils.id.SID
 import ru.tinkoff.tcb.utils.sandboxing.GraalJsSandbox
 import ru.tinkoff.tcb.utils.transformation.json.*
 import ru.tinkoff.tcb.utils.transformation.string.*
 import ru.tinkoff.tcb.utils.transformation.xml.*
 import ru.tinkoff.tcb.utils.xml.SafeXML
-import ru.tinkoff.tcb.utils.xml.emptyNode
 import ru.tinkoff.tcb.utils.xml.XMLStringSyntax
+import ru.tinkoff.tcb.utils.xml.emptyNode
 import ru.tinkoff.tcb.utils.xttp.*
 
 trait CallbackEngine {
@@ -111,7 +107,7 @@ final class ScenarioEngine(
         sendTo(dest, out, data, xdata)
       }
       _ <- ZIO.when(scenario.scope == Scope.Countdown)(
-        scenarioDAO.updateById(scenario.id, Document("$inc" -> Document("times" -> (-1).bson)))
+        scenarioDAO.updateById(scenario.id, Document("$inc" -> Document("times" -> -1.bson)))
       )
       _ <- ZIO.when(scenario.callback.isDefined)(recurseCallback(state, scenario.callback.get, data, xdata))
     } yield ()

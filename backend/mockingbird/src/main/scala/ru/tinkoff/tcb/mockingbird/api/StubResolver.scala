@@ -3,12 +3,7 @@ package ru.tinkoff.tcb.mockingbird.api
 import scala.xml.Node
 
 import com.github.dwickern.macros.NameOf.*
-import eu.timepit.refined.*
-import eu.timepit.refined.api.Refined
-import eu.timepit.refined.collection.NonEmpty
-import eu.timepit.refined.numeric.*
 import io.circe.Json
-import mouse.boolean.*
 import mouse.option.*
 import oolong.dsl.*
 import oolong.mongo.*
@@ -60,13 +55,17 @@ final class StubResolver(
             )
           )
         )
-        condition0 = if (scope != Scope.Countdown) query[HttpStub](hs =>
-                        hs.method == lift(method) && (hs.path.!! == lift(path) || (hs.path.isEmpty && unchecked(pathPatternExpr)))
-                        && hs.scope == lift(scope)
-                      ) else query[HttpStub](hs =>
-          hs.method == lift(method) && (hs.path.!! == lift(path) || (hs.path.isEmpty && unchecked(pathPatternExpr)))
-            && hs.scope == lift(scope) && hs.times.!! > 0
-        )
+        condition0 =
+          if (scope != Scope.Countdown)
+            query[HttpStub](hs =>
+              hs.method == lift(method) && (hs.path.!! == lift(path) || (hs.path.isEmpty && unchecked(pathPatternExpr)))
+                && hs.scope == lift(scope)
+            )
+          else
+            query[HttpStub](hs =>
+              hs.method == lift(method) && (hs.path.!! == lift(path) || (hs.path.isEmpty && unchecked(pathPatternExpr)))
+                && hs.scope == lift(scope) && hs.times.!! > 0
+            )
         candidates0 <- stubDAO.findChunk(condition0, 0, Int.MaxValue)
         _ <- ZIO.when(candidates0.isEmpty)(
           log.info("Can't find any handler for {} of type {}", path, scope) *> ZIO.fail(EarlyReturn)

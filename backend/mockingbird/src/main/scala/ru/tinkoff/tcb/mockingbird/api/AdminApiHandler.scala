@@ -94,7 +94,7 @@ final class AdminApiHandler(
             hs.times.!! > 0
         )
 
-        val pathPart = body.path.map(p => query[HttpStub](_.path.!! == lift(p)))
+        val pathPart        = body.path.map(p => query[HttpStub](_.path.!! == lift(p)))
         val pathPatternPart = body.pathPattern.map(p => query[HttpStub](_.pathPattern.!! == lift(p)))
 
         BsonDocument(
@@ -140,9 +140,7 @@ final class AdminApiHandler(
         )
       )
       candidates0 <- scenarioDAO.findChunk(
-        query[Scenario](s =>
-          s.source == lift(body.source) && s.scope == lift(body.scope) && s.times.!! > 0
-        ),
+        query[Scenario](s => s.source == lift(body.source) && s.scope == lift(body.scope) && s.times.!! > 0),
         0,
         Int.MaxValue
       )
@@ -251,13 +249,10 @@ final class AdminApiHandler(
       )
     )
 
-    val servicePart = service.map(svc =>
-      query[HttpStub](_.serviceSuffix == lift(svc))
-    )
+    val servicePart = service.map(svc => query[HttpStub](_.serviceSuffix == lift(svc)))
 
-    val labelsPart = Option.when(labels.nonEmpty)(labels).map(ls =>
-      query[HttpStub](hs => lift(ls).forall(hs.labels.contains))
-    )
+    val labelsPart =
+      Option.when(labels.nonEmpty)(labels).map(ls => query[HttpStub](hs => lift(ls).forall(hs.labels.contains)))
 
     val finalQuery = BsonDocument(
       "$and" -> BsonArray.fromIterable(
@@ -285,13 +280,10 @@ final class AdminApiHandler(
       )
     )
 
-    val servicePart = service.map(svc =>
-      query[Scenario](_.service == lift(svc))
-    )
+    val servicePart = service.map(svc => query[Scenario](_.service == lift(svc)))
 
-    val labelsPart = Option.when(labels.nonEmpty)(labels).map(ls =>
-      query[Scenario](s => lift(ls).forall(s.labels.contains))
-    )
+    val labelsPart =
+      Option.when(labels.nonEmpty)(labels).map(ls => query[Scenario](s => lift(ls).forall(s.labels.contains)))
 
     val finalQuery = BsonDocument(
       "$and" -> BsonArray.fromIterable(
@@ -340,7 +332,7 @@ final class AdminApiHandler(
             hs.times.!! > 0
         )
 
-        val pathPart = body.path.map(p => query[HttpStub](_.path.!! == lift(p.value)))
+        val pathPart        = body.path.map(p => query[HttpStub](_.path.!! == lift(p.value)))
         val pathPatternPart = body.pathPattern.map(p => query[HttpStub](_.pathPattern.!! == lift(p)))
 
         BsonDocument(
@@ -397,7 +389,7 @@ final class AdminApiHandler(
           s.id != lift(id) &&
             s.source == lift(body.source) &&
             s.scope == lift(body.scope)
-          && s.times.!! > 0
+            && s.times.!! > 0
         ),
         0,
         Int.MaxValue
@@ -446,8 +438,12 @@ final class AdminApiHandler(
       )
       nameDescriptions <- ZIO
         .foreach(queryString) { qs =>
-          grpcMethodDescriptionDAO.findChunk(query[GrpcMethodDescription](gmd =>
-            Pattern.compile(lift(qs), Pattern.CASE_INSENSITIVE).matcher(gmd.methodName).matches()), 0, Integer.MAX_VALUE
+          grpcMethodDescriptionDAO.findChunk(
+            query[GrpcMethodDescription](gmd =>
+              Pattern.compile(lift(qs), Pattern.CASE_INSENSITIVE).matcher(gmd.methodName).matches()
+            ),
+            0,
+            Integer.MAX_VALUE
           )
         }
         .map(_.toList.flatten)
@@ -455,7 +451,9 @@ final class AdminApiHandler(
       serviceQuery <- ZIO.foreach(service) { rs =>
         grpcMethodDescriptionDAO
           .findChunk(query[GrpcMethodDescription](_.service == lift(rs)), 0, Integer.MAX_VALUE)
-          .map(methodDescriptions => query[GrpcStub](gs => lift(methodDescriptions.map(_.id)).contains(gs.methodDescriptionId)))
+          .map(methodDescriptions =>
+            query[GrpcStub](gs => lift(methodDescriptions.map(_.id)).contains(gs.methodDescriptionId))
+          )
       }
 
       stubQuery = {
@@ -467,9 +465,8 @@ final class AdminApiHandler(
           )
         )
 
-        val labelsPart = Option.when(labels.nonEmpty)(labels).map(ls =>
-          query[GrpcStub](s => lift(ls).forall(s.labels.contains))
-        )
+        val labelsPart =
+          Option.when(labels.nonEmpty)(labels).map(ls => query[GrpcStub](s => lift(ls).forall(s.labels.contains)))
 
         BsonDocument(
           "$and" -> BsonArray.fromIterable(
@@ -477,7 +474,7 @@ final class AdminApiHandler(
           )
         )
       }
-      stubs <- grpcStubDAO.findChunk(stubQuery, page.getOrElse(0) * 20, 20, BsonDocument("created" -> -1))
+      stubs              <- grpcStubDAO.findChunk(stubQuery, page.getOrElse(0) * 20, 20, BsonDocument("created" -> -1))
       methodDescriptions <- grpcMethodDescriptionDAO.findByIds(stubs.map(_.methodDescriptionId)*)
       res = stubs.flatMap(stub =>
         methodDescriptions
@@ -798,9 +795,8 @@ final class AdminApiHandler(
       )
     )
 
-    val labelsPart = Option.when(labels.nonEmpty)(labels).map(ls =>
-      query[GrpcStub](gs => lift(ls).forall(gs.labels.contains))
-    )
+    val labelsPart =
+      Option.when(labels.nonEmpty)(labels).map(ls => query[GrpcStub](gs => lift(ls).forall(gs.labels.contains)))
 
     val finalQuery = BsonDocument(
       "$and" -> BsonArray.fromIterable(
@@ -879,9 +875,7 @@ final class AdminApiHandler(
         GrpcStub.validateOptics(_, requestTypes, rootFields)
       )
       candidates0 <- grpcStubDAO.findChunk(
-        query[GrpcStub](gs =>
-          gs.id != lift(id) && gs.methodDescriptionId == lift(methodDescription.id)
-        ),
+        query[GrpcStub](gs => gs.id != lift(id) && gs.methodDescriptionId == lift(methodDescription.id)),
         0,
         Integer.MAX_VALUE
       )
@@ -928,13 +922,11 @@ final class AdminApiHandler(
     val queryPart = queryString.map(qs =>
       query[GrpcMethodDescription](gs =>
         gs.id == lift(qs) ||
-        Pattern.compile(lift(qs), Pattern.CASE_INSENSITIVE).matcher(gs.service).matches()
+          Pattern.compile(lift(qs), Pattern.CASE_INSENSITIVE).matcher(gs.service).matches()
       )
     )
 
-    val servicePart = service.map(svc =>
-      query[GrpcMethodDescription](_.service == lift(svc))
-    )
+    val servicePart = service.map(svc => query[GrpcMethodDescription](_.service == lift(svc)))
 
     val finalQuery = BsonDocument(
       "$and" -> BsonArray.fromIterable(
@@ -973,9 +965,7 @@ final class AdminApiHandler(
       responseTypes = GrpcMethodDescription.makeDictTypes(responsePkg, responseSchema.schemas).toMap
       _ <- GrpcMethodDescription.getRootFields(responsePkg.resolve(body.responseClass), responseTypes)
       candidates <- grpcMethodDescriptionDAO.findChunk(
-        query[GrpcMethodDescription](gmd =>
-          gmd.id != lift(body.id) && gmd.methodName == lift(body.methodName)
-        ),
+        query[GrpcMethodDescription](gmd => gmd.id != lift(body.id) && gmd.methodName == lift(body.methodName)),
         0,
         Int.MaxValue
       )
@@ -1012,9 +1002,7 @@ final class AdminApiHandler(
         )
       )
       candidates <- grpcMethodDescriptionDAO.findChunk(
-        query[GrpcMethodDescription](gmd =>
-          gmd.id != lift(id) && gmd.methodName == lift(body.methodName)
-        ),
+        query[GrpcMethodDescription](gmd => gmd.id != lift(id) && gmd.methodName == lift(body.methodName)),
         0,
         Int.MaxValue
       )

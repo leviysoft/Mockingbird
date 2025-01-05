@@ -1,17 +1,17 @@
 package ru.tinkoff.tcb.mockingbird.api.request
 
+import eu.timepit.refined.types.string.NonEmptyString
 import io.circe.Decoder
 import io.circe.Encoder
-import eu.timepit.refined.types.string.NonEmptyString
 import io.circe.refined.*
 import oolong.bson.*
-import oolong.bson.refined.given
 import oolong.bson.given
 import oolong.bson.meta.QueryMeta
 import oolong.bson.meta.queryMeta
+import oolong.bson.refined.given
+import sttp.tapir.Schema
 import sttp.tapir.Schema.annotations.description
 import sttp.tapir.codec.refined.*
-import sttp.tapir.Schema
 
 import ru.tinkoff.tcb.generic.PropSubset
 import ru.tinkoff.tcb.mockingbird.model.ByteArray
@@ -40,7 +40,9 @@ final case class UpdateGrpcMethodDescriptionRequest(
     responseClass: String,
     @description("gRPC base64 encoded response proto")
     responseCodecs: ByteArray.Type
-) derives Decoder, Encoder, Schema
+) derives Decoder,
+      Encoder,
+      Schema
 object UpdateGrpcMethodDescriptionRequest {
   implicitly[PropSubset[GrpcMethodDescriptionPatch, GrpcMethodDescription]]
 }

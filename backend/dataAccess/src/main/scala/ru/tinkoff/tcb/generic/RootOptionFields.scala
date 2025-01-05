@@ -5,7 +5,6 @@ import java.time.Year
 import scala.annotation.implicitNotFound
 
 import eu.timepit.refined.api.RefType
-
 import magnolia1.*
 
 @implicitNotFound("Could not find an instance of RootOptionFields for ${T}")

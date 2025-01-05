@@ -1,11 +1,13 @@
 package ru.tinkoff.tcb.mockingbird.dal
 
 import scala.annotation.implicitNotFound
+
 import com.github.dwickern.macros.NameOf.*
 import org.mongodb.scala.MongoCollection
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.model.Indexes.ascending
 import org.mongodb.scala.model.Indexes.descending
+
 import ru.tinkoff.tcb.mockingbird.model.DestinationConfiguration
 import ru.tinkoff.tcb.mongo.DAOBase
 import ru.tinkoff.tcb.mongo.MongoDAO
@@ -35,7 +37,7 @@ object DestinationConfigurationDAOImpl {
   val live: RLayer[MongoCollection[BsonDocument] & AES, DestinationConfigurationDAO[Task]] =
     ZLayer {
       for {
-        coll                <- ZIO.service[MongoCollection[BsonDocument]]
+        coll      <- ZIO.service[MongoCollection[BsonDocument]]
         given AES <- ZIO.service[AES]
         dcd = new DestinationConfigurationDAOImpl(coll)
         _ <- dcd.createIndexes

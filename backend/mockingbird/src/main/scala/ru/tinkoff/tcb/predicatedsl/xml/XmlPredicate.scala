@@ -9,9 +9,9 @@ import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.Json
 import io.circe.parser.parse
-import org.bson.BsonInvalidOperationException
 import oolong.bson.*
 import oolong.bson.given
+import org.bson.BsonInvalidOperationException
 import sttp.tapir.Schema
 
 import ru.tinkoff.tcb.circe.bson.*

@@ -2,19 +2,14 @@ package ru.tinkoff.tcb.mockingbird.model
 
 import java.time.Instant
 
-import eu.timepit.refined.types.numeric.NonNegInt
-import eu.timepit.refined.types.string.NonEmptyString
 import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.Json
-import io.circe.refined.*
 import mouse.boolean.*
 import oolong.bson.*
 import oolong.bson.given
-import oolong.bson.refined.given
 import oolong.bson.meta.QueryMeta
 import oolong.bson.meta.queryMeta
-import sttp.tapir.codec.refined.*
 import sttp.tapir.Schema
 
 import ru.tinkoff.tcb.circe.bson.*
@@ -43,7 +38,11 @@ final case class GrpcStub(
     requestPredicates: JsonPredicate,
     persist: Option[Map[JsonOptic, Json]],
     labels: Seq[String]
-) derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema
+) derives BsonDecoder,
+      BsonEncoder,
+      Decoder,
+      Encoder,
+      Schema
 
 object GrpcStub {
   private val indexRegex = "\\[([\\d]+)\\]".r

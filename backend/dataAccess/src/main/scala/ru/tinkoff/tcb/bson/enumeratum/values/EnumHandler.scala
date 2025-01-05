@@ -1,8 +1,8 @@
 package ru.tinkoff.tcb.bson.enumeratum.values
 
 import enumeratum.values.*
-import oolong.bson.{BsonDecoder, BsonEncoder}
-import oolong.bson.given
+import oolong.bson.BsonDecoder
+import oolong.bson.BsonEncoder
 import org.mongodb.scala.bson.*
 
 object EnumHandler {

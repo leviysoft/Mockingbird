@@ -1,13 +1,12 @@
 package ru.tinkoff.tcb.protocol
 
-import scala.util.Failure
-import scala.util.Success
 import scala.util.Try
+
 import cats.data.NonEmptyVector
-import org.bson.BsonInvalidOperationException
 import oolong.bson.*
 import oolong.bson.given
 import org.mongodb.scala.bson.*
+
 import ru.tinkoff.tcb.utils.circe.optics.JLens
 import ru.tinkoff.tcb.utils.circe.optics.JsonOptic
 import ru.tinkoff.tcb.utils.string.*

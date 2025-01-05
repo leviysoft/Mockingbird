@@ -2,17 +2,14 @@ package ru.tinkoff.tcb.mockingbird.model
 
 import java.time.Instant
 
-import eu.timepit.refined.types.string.NonEmptyString
-import io.circe.{Decoder, Encoder}
-import io.circe.refined.*
+import io.circe.Decoder
+import io.circe.Encoder
 import io.scalaland.chimney.dsl.*
 import neotype.*
 import oolong.bson.*
 import oolong.bson.given
-import oolong.bson.refined.given
 import oolong.bson.meta.QueryMeta
 import oolong.bson.meta.queryMeta
-import sttp.tapir.codec.refined.*
 import sttp.tapir.Schema
 
 import ru.tinkoff.tcb.mockingbird.api.request.CreateGrpcStubRequest
@@ -32,7 +29,11 @@ final case class GrpcMethodDescription(
     requestSchema: GrpcProtoDefinition,
     responseClass: String,
     responseSchema: GrpcProtoDefinition
-) derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema
+) derives BsonDecoder,
+      BsonEncoder,
+      Decoder,
+      Encoder,
+      Schema
 
 object GrpcMethodDescription {
   inline given QueryMeta[GrpcMethodDescription] = queryMeta(_.id -> "_id")
@@ -93,7 +94,7 @@ object GrpcMethodDescription {
       this.unsafeMake(s".${name.dropWhile(_ == '.')}")
   }
 
-  def makeDictTypes(p: PackagePrefix.Type , ms: Seq[GrpcRootMessage]): Vector[(NormalizedTypeName.Type, GrpcRootMessage)] =
+  def makeDictTypes(p: PackagePrefix.Type, ms: Seq[GrpcRootMessage]): Vector[(NormalizedTypeName.Type, GrpcRootMessage)] =
     ms.foldLeft(Vector.empty[(NormalizedTypeName.Type, GrpcRootMessage)]) {
       case (b, m @ GrpcMessageSchema(name, _, _, nested, nestedEnums)) =>
         (b :+ (p.resolve(name) -> m)) ++

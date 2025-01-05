@@ -1,7 +1,8 @@
 package ru.tinkoff.tcb.mockingbird.model
 
+import io.circe.Decoder
+import io.circe.Encoder
 import io.circe.Json
-import io.circe.{Decoder, Encoder}
 import oolong.bson.*
 import oolong.bson.given
 import sttp.tapir.Schema
@@ -17,7 +18,9 @@ final case class EventDestinationRequest(
     body: Option[Json],
     stringifybody: Option[Boolean],
     encodeBase64: Option[Boolean]
-) derives Decoder, Encoder, Schema
+) derives Decoder,
+      Encoder,
+      Schema
 
 object EventDestinationRequest {
   implicit def eventDestinationRequestBsonEncoder(implicit aes: AES): BsonEncoder[EventDestinationRequest] =

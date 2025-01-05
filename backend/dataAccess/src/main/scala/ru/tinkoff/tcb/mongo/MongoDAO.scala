@@ -1,11 +1,13 @@
 package ru.tinkoff.tcb.mongo
 
-import oolong.bson.{BsonDecoder, BsonEncoder}
+import oolong.bson.BsonDecoder
+import oolong.bson.BsonEncoder
 import oolong.bson.given
 import org.mongodb.scala.bson.Document
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.changestream.ChangeStreamDocument
+
 import ru.tinkoff.tcb.dataaccess.DAO
 import ru.tinkoff.tcb.dataaccess.UpdateResult
 import ru.tinkoff.tcb.generic.Fields

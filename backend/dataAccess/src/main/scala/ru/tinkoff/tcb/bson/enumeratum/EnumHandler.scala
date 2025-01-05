@@ -2,6 +2,7 @@ package ru.tinkoff.tcb.bson.enumeratum
 
 import scala.util.Failure
 import scala.util.Try
+
 import enumeratum.*
 import oolong.bson.*
 import org.mongodb.scala.bson.*

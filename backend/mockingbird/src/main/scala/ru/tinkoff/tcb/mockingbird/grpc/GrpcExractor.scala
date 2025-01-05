@@ -8,11 +8,11 @@ import com.github.os72.protobuf.dynamic.MessageDefinition
 import com.google.protobuf.DescriptorProtos
 import com.google.protobuf.DynamicMessage
 import com.google.protobuf.util.JsonFormat
-import neotype.*
 import io.circe.Json
 import io.circe.parser.*
 import mouse.boolean.*
 import mouse.ignore
+import neotype.*
 import org.apache.commons.io.output.ByteArrayOutputStream
 
 import ru.tinkoff.tcb.mockingbird.model.*

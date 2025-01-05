@@ -1,7 +1,6 @@
 package ru.tinkoff.tcb.bson.enumeratum
 
 import oolong.bson.*
-import oolong.bson.given
 import org.mongodb.scala.bson.*
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers

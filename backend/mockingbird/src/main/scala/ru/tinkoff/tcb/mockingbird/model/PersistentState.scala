@@ -20,7 +20,11 @@ final case class PersistentState(
     id: SID[PersistentState],
     data: Json,
     created: Instant
-) derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema
+) derives BsonDecoder,
+      BsonEncoder,
+      Decoder,
+      Encoder,
+      Schema
 
 object PersistentState {
   inline given QueryMeta[PersistentState] = queryMeta(_.id -> "_id")

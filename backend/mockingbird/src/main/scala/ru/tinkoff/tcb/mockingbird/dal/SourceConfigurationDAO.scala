@@ -39,7 +39,7 @@ object SourceConfigurationDAOImpl {
   val live: RLayer[MongoCollection[BsonDocument] & AES, SourceConfigurationDAO[Task]] =
     ZLayer {
       for {
-        coll                <- ZIO.service[MongoCollection[BsonDocument]]
+        coll      <- ZIO.service[MongoCollection[BsonDocument]]
         given AES <- ZIO.service[AES]
         scd = new SourceConfigurationDAOImpl(coll)
         _ <- scd.createIndexes

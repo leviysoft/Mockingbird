@@ -1,6 +1,5 @@
 package ru.tinkoff.tcb.bson.optics
 
-import scala.annotation.nowarn
 import scala.util.Try
 
 import oolong.bson.*

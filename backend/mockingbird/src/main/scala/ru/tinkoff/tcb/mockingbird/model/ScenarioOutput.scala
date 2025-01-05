@@ -1,6 +1,7 @@
 package ru.tinkoff.tcb.mockingbird.model
 
 import scala.concurrent.duration.FiniteDuration
+
 import com.github.dwickern.macros.NameOf.*
 import io.circe.Decoder
 import io.circe.Encoder
@@ -8,16 +9,17 @@ import io.circe.Json
 import io.circe.derivation.Configuration as CirceConfig
 import neotype.*
 import oolong.bson.*
-import oolong.bson.given
 import oolong.bson.annotation.BsonDiscriminator
+import oolong.bson.given
+import sttp.tapir.Schema
 import sttp.tapir.generic.Configuration as TapirConfig
+
 import ru.tinkoff.tcb.circe.bson.*
 import ru.tinkoff.tcb.protocol.json.*
 import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.transformation.json.JsonTransformations
 import ru.tinkoff.tcb.utils.transformation.xml.XmlTransformation
 import ru.tinkoff.tcb.utils.xml.XMLString
-import sttp.tapir.Schema
 
 @BsonDiscriminator("mode")
 sealed trait ScenarioOutput derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema {
@@ -41,7 +43,9 @@ object ScenarioOutput {
 final case class RawOutput(
     payload: String,
     delay: Option[FiniteDuration]
-) extends ScenarioOutput derives Encoder, Decoder {
+) extends ScenarioOutput
+    derives Encoder,
+      Decoder {
   val isTemplate = false
 }
 

@@ -1,6 +1,5 @@
 package ru.tinkoff.tcb.mockingbird.resource
 
-import scala.annotation.nowarn
 import scala.util.control.NonFatal
 
 import mouse.option.*

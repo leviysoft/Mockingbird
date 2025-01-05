@@ -1,17 +1,18 @@
 package ru.tinkoff.tcb.mockingbird.model
 
 import scala.xml.NodeSeq
+
 import com.github.dwickern.macros.NameOf.*
 import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.Json
 import io.circe.derivation.Configuration as CirceConfig
 import io.circe.parser.parse
-import sttp.tapir.Schema
-import sttp.tapir.generic.Configuration as TapirConfig
 import oolong.bson.*
 import oolong.bson.annotation.BsonDiscriminator
-import oolong.bson.given
+import sttp.tapir.Schema
+import sttp.tapir.generic.Configuration as TapirConfig
+
 import ru.tinkoff.tcb.protocol.bson.*
 import ru.tinkoff.tcb.protocol.json.*
 import ru.tinkoff.tcb.protocol.schema.*

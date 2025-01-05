@@ -9,7 +9,6 @@ import io.circe.Json
 import io.circe.JsonNumber
 import io.circe.JsonObject
 import oolong.bson.*
-import oolong.bson.given
 import org.bson.BsonInvalidOperationException
 import org.bson.types.Decimal128
 import org.mongodb.scala.bson.*

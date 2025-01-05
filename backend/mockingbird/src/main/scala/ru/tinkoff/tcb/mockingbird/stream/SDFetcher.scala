@@ -1,6 +1,5 @@
 package ru.tinkoff.tcb.mockingbird.stream
 
-import scala.annotation.nowarn
 import scala.util.control.NonFatal
 
 import fs2.Stream

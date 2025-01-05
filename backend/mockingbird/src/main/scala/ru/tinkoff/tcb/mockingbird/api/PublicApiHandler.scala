@@ -5,15 +5,11 @@ import scala.util.control.NonFatal
 import scala.xml.Node
 
 import eu.timepit.refined.*
-import eu.timepit.refined.numeric.given
 import io.circe.Json
 import io.circe.syntax.*
 import mouse.boolean.*
 import mouse.option.*
-import oolong.bson.*
 import oolong.bson.given
-import oolong.dsl.*
-import oolong.mongo.*
 import org.mongodb.scala.bson.Document
 import sttp.client4.{Backend as SttpBackend, *}
 import sttp.client4.circe.*
@@ -46,7 +42,6 @@ import ru.tinkoff.tcb.mockingbird.model.SimpleRequestBody
 import ru.tinkoff.tcb.mockingbird.model.XmlProxyResponse
 import ru.tinkoff.tcb.mockingbird.scenario.CallbackEngine
 import ru.tinkoff.tcb.mockingbird.scenario.ScenarioEngine
-import ru.tinkoff.tcb.protocol.log.*
 import ru.tinkoff.tcb.utils.any.*
 import ru.tinkoff.tcb.utils.circe.optics.JsonOptic
 import ru.tinkoff.tcb.utils.regex.*
@@ -144,7 +139,9 @@ final class PublicApiHandler(
               )
           )
       }
-      _ <- ZIO.when(stub.scope == Scope.Countdown)(stubDAO.updateById(stub.id, Document("$inc" -> Document("times" -> (-1).bson))))
+      _ <- ZIO.when(stub.scope == Scope.Countdown)(
+        stubDAO.updateById(stub.id, Document("$inc" -> Document("times" -> -1.bson)))
+      )
       _ <- ZIO.when(stub.callback.isDefined)(
         engine
           .recurseCallback(state, stub.callback.get, data, xdata)

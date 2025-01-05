@@ -41,7 +41,9 @@ object ResponseSpec {
   given CirceConfig = CirceConfig(transformConstructorNames = modes).withDiscriminator("mode")
 }
 
-final case class RawResponseSpec(code: Option[Int], body: Option[String]) extends ResponseSpec derives Decoder, Encoder {
+final case class RawResponseSpec(code: Option[Int], body: Option[String]) extends ResponseSpec
+    derives Decoder,
+      Encoder {
   override def checkBody(data: String): Boolean = body.forall(_ == data)
 }
 
@@ -49,16 +51,22 @@ final case class JsonResponseSpec(code: Option[Int], body: Option[Json]) extends
   override def checkBody(data: String): Boolean = parse(data).map(jx => body.forall(_ == jx)).getOrElse(false)
 }
 
-final case class XmlResponseSpec(code: Option[Int], body: Option[XMLString.Type]) extends ResponseSpec derives Decoder, Encoder {
+final case class XmlResponseSpec(code: Option[Int], body: Option[XMLString.Type]) extends ResponseSpec
+    derives Decoder,
+      Encoder {
   override def checkBody(data: String): Boolean =
     Try(SafeXML.loadString(data)).toOption.exists(nx => body.forall(_.unwrap == nx))
 }
 
-final case class JLensResponseSpec(code: Option[Int], body: Option[JsonPredicate]) extends ResponseSpec derives Decoder, Encoder {
+final case class JLensResponseSpec(code: Option[Int], body: Option[JsonPredicate]) extends ResponseSpec
+    derives Decoder,
+      Encoder {
   override def checkBody(data: String): Boolean = parse(data).map(jx => body.forall(_(jx))).getOrElse(false)
 }
 
-final case class XPathResponseSpec(code: Option[Int], body: Option[XmlPredicate]) extends ResponseSpec derives Decoder, Encoder {
+final case class XPathResponseSpec(code: Option[Int], body: Option[XmlPredicate]) extends ResponseSpec
+    derives Decoder,
+      Encoder {
   override def checkBody(data: String): Boolean =
     Try(SafeXML.loadString(data)).exists(nx => body.forall(_(nx)))
 }

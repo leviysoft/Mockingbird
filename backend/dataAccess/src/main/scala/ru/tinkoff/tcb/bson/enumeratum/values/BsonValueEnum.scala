@@ -1,8 +1,12 @@
 package ru.tinkoff.tcb.bson.enumeratum.values
 
 import scala.util.Try
+
 import enumeratum.values.*
-import oolong.bson.{BsonDecoder, BsonEncoder, BsonKeyDecoder, BsonKeyEncoder}
+import oolong.bson.BsonDecoder
+import oolong.bson.BsonEncoder
+import oolong.bson.BsonKeyDecoder
+import oolong.bson.BsonKeyEncoder
 import oolong.bson.given
 
 trait BsonValueEnum[ValueType, EntryType <: ValueEnumEntry[ValueType]] {

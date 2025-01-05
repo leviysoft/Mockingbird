@@ -1,12 +1,10 @@
 package ru.tinkoff.tcb.bson.enumeratum
 
+import oolong.bson.*
 import org.mongodb.scala.bson.*
 import org.scalatest.OptionValues.*
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
-
-import oolong.bson.*
-import oolong.bson.given
 
 class EnumBsonHandlerSpec extends AnyFunSpec with Matchers {
   testScenario(

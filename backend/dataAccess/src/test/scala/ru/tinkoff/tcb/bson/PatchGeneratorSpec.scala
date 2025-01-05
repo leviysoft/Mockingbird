@@ -1,11 +1,10 @@
 package ru.tinkoff.tcb.bson
 
+import oolong.bson.*
+import oolong.bson.given
 import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-
-import oolong.bson.*
-import oolong.bson.given
 
 final case class TestEntity(_id: String, name: String, externalKey: Option[Int]) derives BsonDecoder, BsonEncoder
 

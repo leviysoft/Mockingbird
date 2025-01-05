@@ -8,18 +8,15 @@ import eu.timepit.refined.*
 import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.Json
-import io.circe.refined.*
 import mouse.boolean.*
-import sttp.tapir.Schema.annotations.description
-import sttp.tapir.codec.refined.*
-import sttp.tapir.Schema
-
 import oolong.bson.*
 import oolong.bson.given
 import oolong.bson.meta.QueryMeta
 import oolong.bson.meta.queryMeta
+import sttp.tapir.Schema
+import sttp.tapir.Schema.annotations.description
+
 import ru.tinkoff.tcb.circe.bson.*
-import ru.tinkoff.tcb.mockingbird.model.StubCode
 import ru.tinkoff.tcb.predicatedsl.Keyword
 import ru.tinkoff.tcb.protocol.bson.*
 import ru.tinkoff.tcb.protocol.json.*
@@ -59,7 +56,11 @@ final case class HttpStub(
     callback: Option[Callback],
     @description("tags")
     labels: Seq[String]
-) derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema
+) derives BsonDecoder,
+      BsonEncoder,
+      Decoder,
+      Encoder,
+      Schema
 
 object HttpStub extends CallbackChecker {
   inline given QueryMeta[HttpStub] = queryMeta(_.id -> "_id")
@@ -90,7 +91,8 @@ object HttpStub extends CallbackChecker {
 
   private val responseCodes204and304: Rule[HttpStub] = stub =>
     stub.response match {
-      case StubCode(rc) if rc == refineV[HttpStatusCodeRange].unsafeFrom(204) || rc == refineV[HttpStatusCodeRange].unsafeFrom(304) =>
+      case StubCode(rc)
+          if rc == refineV[HttpStatusCodeRange].unsafeFrom(204) || rc == refineV[HttpStatusCodeRange].unsafeFrom(304) =>
         stub.response match {
           case EmptyResponse(_, _, _) => Vector.empty
           case _ =>

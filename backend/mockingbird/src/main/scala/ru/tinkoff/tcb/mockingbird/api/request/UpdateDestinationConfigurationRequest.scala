@@ -3,8 +3,8 @@ package ru.tinkoff.tcb.mockingbird.api.request
 import cats.data.NonEmptyVector
 import io.circe.Decoder
 import io.circe.Encoder
-import sttp.tapir.Schema.annotations.description
 import sttp.tapir.Schema
+import sttp.tapir.Schema.annotations.description
 
 import ru.tinkoff.tcb.generic.PropSubset
 import ru.tinkoff.tcb.mockingbird.model.DestinationConfiguration
@@ -22,7 +22,9 @@ final case class UpdateDestinationConfigurationRequest(
     init: Option[NonEmptyVector[ResourceRequest]],
     @description("Finalizer specification")
     shutdown: Option[NonEmptyVector[ResourceRequest]],
-) derives Decoder, Encoder, Schema
+) derives Decoder,
+      Encoder,
+      Schema
 
 object UpdateDestinationConfigurationRequest {
   implicitly[PropSubset[UpdateDestinationConfigurationRequest, DestinationConfiguration]]
