@@ -37,9 +37,9 @@ final case class Scenario(
     scope: Scope,
     @description("The number of possible triggers. Only relevant for scope=countdown")
     times: Option[Int],
-    service: NonEmptyString,
+    service: String,
     @description("Scenario name (shown in logs, handy for debugging)")
-    name: NonEmptyString,
+    name: String,
     @description("Event source name")
     source: SID[SourceConfiguration],
     seed: Option[Json],

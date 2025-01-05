@@ -60,16 +60,13 @@ final class StubResolver(
             )
           )
         )
-        condition0 = query[HttpStub](hs =>
+        condition0 = if (scope != Scope.Countdown) query[HttpStub](hs =>
+                        hs.method == lift(method) && (hs.path.!! == lift(path) || (hs.path.isEmpty && unchecked(pathPatternExpr)))
+                        && hs.scope == lift(scope)
+                      ) else query[HttpStub](hs =>
           hs.method == lift(method) && (hs.path.!! == lift(path) || (hs.path.isEmpty && unchecked(pathPatternExpr)))
-          && hs.scope == lift(scope)
+            && hs.scope == lift(scope) && hs.times.!! > 0
         )
-        //TODO
-        /*
-        condition = (scope == Scope.Countdown).fold(
-          condition0 && prop[HttpStub](_.times) > Option(refineMV[NonNegative](0)),
-          condition0
-        )*/
         candidates0 <- stubDAO.findChunk(condition0, 0, Int.MaxValue)
         _ <- ZIO.when(candidates0.isEmpty)(
           log.info("Can't find any handler for {} of type {}", path, scope) *> ZIO.fail(EarlyReturn)

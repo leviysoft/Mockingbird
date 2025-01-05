@@ -36,7 +36,7 @@ final case class CreateStubRequest(
     @description("HTTP method")
     method: HttpMethod,
     @description("The path suffix where the mock triggers")
-    path: Option[NonEmptyString],
+    path: Option[String],
     pathPattern: Option[Regex],
     seed: Option[Json],
     @description("State search predicate")

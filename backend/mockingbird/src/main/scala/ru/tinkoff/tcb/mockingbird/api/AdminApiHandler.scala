@@ -77,7 +77,7 @@ final class AdminApiHandler(
 
   def createHttpStub(body: CreateStubRequest): RIO[WLD, OperationResult[SID[HttpStub]]] =
     for {
-      service1 <- ZIO.foreach(body.path.map(_.value))(serviceDAO.getServiceFor).map(_.flatten)
+      service1 <- ZIO.foreach(body.path)(serviceDAO.getServiceFor).map(_.flatten)
       service2 <- ZIO.foreach(body.pathPattern)(serviceDAO.getServiceFor).map(_.flatten)
       _ <- ZIO.when(service1.isEmpty && service2.isEmpty)(
         ZIO.fail(
@@ -87,17 +87,23 @@ final class AdminApiHandler(
         )
       )
       service = service1.orElse(service2).get
-      candidates0 <- stubDAO.findChunk(
-        query[HttpStub](hs =>
+      candidatesQuery = {
+        val baseQ = query[HttpStub](hs =>
           hs.method == lift(body.method) &&
-          //TODO
-            //(hs.path.!! == body.path || hs.pathPattern.!! == body.pathPattern) &&
             hs.scope == lift(body.scope) &&
-            hs.times.!! > 0 //refineV[NonNegative](0)
-        ),
-        0,
-        Int.MaxValue
-      )
+            hs.times.!! > 0
+        )
+
+        val pathPart = body.path.map(p => query[HttpStub](_.path.!! == lift(p)))
+        val pathPatternPart = body.pathPattern.map(p => query[HttpStub](_.pathPattern.!! == lift(p)))
+
+        BsonDocument(
+          "$and" -> BsonArray.fromIterable(
+            Vector(Some(baseQ), pathPart, pathPatternPart).flatten
+          )
+        )
+      }
+      candidates0 <- stubDAO.findChunk(candidatesQuery, 0, Int.MaxValue)
       candidates1 = candidates0.filter(_.request == body.request)
       candidates2 = candidates1.filter(_.state == body.state)
       _ <- ZIO.when(candidates2.nonEmpty)(
@@ -240,9 +246,8 @@ final class AdminApiHandler(
       query[HttpStub](hs =>
         hs.id == lift(qs) ||
           Pattern.compile(lift(qs), Pattern.CASE_INSENSITIVE).matcher(hs.name).matches() ||
-          Pattern.compile(lift(qs), Pattern.CASE_INSENSITIVE).matcher(hs.path.!!).matches() //||
-          //TODO
-          //Pattern.compile(qs, Pattern.CASE_INSENSITIVE).matcher(hs.pathPattern.!!).matches()
+          Pattern.compile(lift(qs), Pattern.CASE_INSENSITIVE).matcher(hs.path.!!).matches() ||
+          unchecked(BsonDocument("pathPattern" -> BsonDocument("$regex" -> qs, "$options" -> "i")))
       )
     )
 
@@ -254,8 +259,13 @@ final class AdminApiHandler(
       query[HttpStub](hs => lift(ls).forall(hs.labels.contains))
     )
 
-    //TODO
-    stubDAO.findChunk(BsonDocument(), page.getOrElse(0) * 20, 20, BsonDocument("created" -> -1))
+    val finalQuery = BsonDocument(
+      "$and" -> BsonArray.fromIterable(
+        Vector(Some(basePred), queryPart, servicePart, labelsPart).flatten
+      )
+    )
+
+    stubDAO.findChunk(finalQuery, page.getOrElse(0) * 20, 20, BsonDocument("created" -> -1))
   }
 
   def fetchScenarios(
@@ -264,28 +274,32 @@ final class AdminApiHandler(
       service: Option[String],
       labels: List[String]
   ): RIO[WLD, Vector[Scenario]] = {
-    /*
-    val basePred = query[Scenario](s => s.scope != Scope.Countdown || s.times.!! > 0)
+    val basePred = query[Scenario](s => s.scope != lift(Scope.Countdown) || s.times.!! > 0)
 
     val queryPart = queryString.map(qs =>
       query[Scenario](s =>
-        s.id == qs ||
-          Pattern.compile(qs, Pattern.CASE_INSENSITIVE).matcher(s.name).matches() ||
-          Pattern.compile(qs, Pattern.CASE_INSENSITIVE).matcher(s.source.!!).matches() ||
-          Pattern.compile(qs, Pattern.CASE_INSENSITIVE).matcher(s.destination.!!).matches()
+        s.id == lift(qs) ||
+          Pattern.compile(lift(qs), Pattern.CASE_INSENSITIVE).matcher(s.name).matches() ||
+          Pattern.compile(lift(qs), Pattern.CASE_INSENSITIVE).matcher(s.source).matches() ||
+          Pattern.compile(lift(qs), Pattern.CASE_INSENSITIVE).matcher(s.destination.!!).matches()
       )
     )
 
     val servicePart = service.map(svc =>
-      query[Scenario](_.serviceSuffix == svc)
+      query[Scenario](_.service == lift(svc))
     )
 
     val labelsPart = Option.when(labels.nonEmpty)(labels).map(ls =>
-      query[Scenario](_.labels.forall(ls.contains))
-    )*/
+      query[Scenario](s => lift(ls).forall(s.labels.contains))
+    )
 
-    //TODO
-    scenarioDAO.findChunk(BsonDocument(), page.getOrElse(0) * 20, 20, BsonDocument("created" -> -1))
+    val finalQuery = BsonDocument(
+      "$and" -> BsonArray.fromIterable(
+        Vector(Some(basePred), queryPart, servicePart, labelsPart).flatten
+      )
+    )
+
+    scenarioDAO.findChunk(finalQuery, page.getOrElse(0) * 20, 20, BsonDocument("created" -> -1))
   }
 
   def getStub(id: SID[HttpStub]): RIO[WLD, Option[HttpStub]] =
@@ -318,18 +332,28 @@ final class AdminApiHandler(
         )
       )
       service = service1.orElse(service2).get
-      candidates0 <- stubDAO.findChunk(/*
-        where(_._id =/= id) &&
-          prop[HttpStub](_.method) === body.method &&
-          (if (body.path.isDefined) prop[HttpStub](_.path) === body.path
-           else prop[HttpStub](_.pathPattern) === body.pathPattern) &&
-          prop[HttpStub](_.scope) === body.scope &&
-          prop[HttpStub](_.times) > Option(refineMV[NonNegative](0))*/
-        //TODO
-        BsonDocument(),
-        0,
-        Int.MaxValue
-      )
+      candidatesQuery = {
+        val baseQ = query[HttpStub](hs =>
+          hs.id != lift(id) &&
+            hs.method == lift(body.method) &&
+            hs.scope == lift(body.scope) &&
+            hs.times.!! > 0
+        )
+
+        val pathPart = body.path.map(p => query[HttpStub](_.path.!! == lift(p.value)))
+        val pathPatternPart = body.pathPattern.map(p => query[HttpStub](_.pathPattern.!! == lift(p)))
+
+        BsonDocument(
+          "$and" -> BsonArray.fromIterable(
+            Vector(
+              Some(baseQ),
+              pathPart,
+              pathPatternPart
+            ).flatten
+          )
+        )
+      }
+      candidates0 <- stubDAO.findChunk(candidatesQuery, 0, Int.MaxValue)
       candidates1 = candidates0.filter(_.request == body.request)
       candidates2 = candidates1.filter(_.state == body.state)
       _ <- ZIO.when(candidates2.nonEmpty)(
@@ -369,11 +393,12 @@ final class AdminApiHandler(
         )
       )
       candidates0 <- scenarioDAO.findChunk(
-        BsonDocument()/*
-        where(_._id =/= id) &&
-          prop[Scenario](_.source) === body.source &&
-          prop[Scenario](_.scope) === body.scope &&
-          prop[HttpStub](_.times) > Option(refineMV[NonNegative](0))*/,
+        query[Scenario](s =>
+          s.id != lift(id) &&
+            s.source == lift(body.source) &&
+            s.scope == lift(body.scope)
+          && s.times.!! > 0
+        ),
         0,
         Int.MaxValue
       )
@@ -411,43 +436,48 @@ final class AdminApiHandler(
 
   def fetchGrpcStubs(
       page: Option[Int],
-      query: Option[String],
+      queryString: Option[String],
       service: Option[String],
       labels: List[String]
-  ): RIO[WLD, Vector[GrpcStubView]] = ???
-  //TODO
-  /*
+  ): RIO[WLD, Vector[GrpcStubView]] =
     for {
       scopeQuery <- ZIO.succeed(
-        query[GrpcStub](gs => gs.scope != Scope.Countdown && gs.times > 0))
+        query[GrpcStub](gs => gs.scope != lift(Scope.Countdown) && gs.times.!! > 0)
       )
       nameDescriptions <- ZIO
-        .foreach(query) { query =>
+        .foreach(queryString) { qs =>
           grpcMethodDescriptionDAO.findChunk(query[GrpcMethodDescription](gmd =>
-            Pattern.compile(query, Pattern.CASE_INSENSITIVE).matcher(gmd.methodName).matches()), 0, Integer.MAX_VALUE
+            Pattern.compile(lift(qs), Pattern.CASE_INSENSITIVE).matcher(gmd.methodName).matches()), 0, Integer.MAX_VALUE
           )
         }
         .map(_.toList.flatten)
-      nameQuery =
-        if (query.isDefined) {
-          val qs = query.get
-          val q = prop[GrpcStub](_.id) === SID[GrpcStub](qs).asInstanceOf[SID[GrpcStub]] ||
-            prop[GrpcStub](_.name).regex(qs, "i") ||
-            prop[GrpcStub](_.methodDescriptionId).in(nameDescriptions.map(_.id))
-          scopeQuery && q
-        } else scopeQuery
-      refService = service.flatMap(refineV[NonEmpty](_).toOption)
-      serviceQuery <-
-        if (refService.isDefined) {
-          grpcMethodDescriptionDAO
-            .findChunk(prop[GrpcMethodDescription](_.service) === refService.get, 0, Integer.MAX_VALUE)
-            .map(methodDescriptions => nameQuery && prop[GrpcStub](_.methodDescriptionId).in(methodDescriptions.map(_.id)))
-        } else ZIO.succeed(nameQuery)
-      queryDoc =
-        if (labels.nonEmpty) {
-          serviceQuery && (prop[GrpcStub](_.labels).containsAll(labels))
-        } else serviceQuery
-      stubs <- grpcStubDAO.findChunk(queryDoc, page.getOrElse(0) * 20, 20, BsonDocument("created" -> -1))
+
+      serviceQuery <- ZIO.foreach(service) { rs =>
+        grpcMethodDescriptionDAO
+          .findChunk(query[GrpcMethodDescription](_.service == lift(rs)), 0, Integer.MAX_VALUE)
+          .map(methodDescriptions => query[GrpcStub](gs => lift(methodDescriptions.map(_.id)).contains(gs.methodDescriptionId)))
+      }
+
+      stubQuery = {
+        val queryPart = queryString.map(qs =>
+          query[GrpcStub](gs =>
+            gs.id == lift(qs) ||
+              Pattern.compile(lift(qs), Pattern.CASE_INSENSITIVE).matcher(gs.name).matches() ||
+              lift(nameDescriptions.map(_.id)).contains(gs.methodDescriptionId)
+          )
+        )
+
+        val labelsPart = Option.when(labels.nonEmpty)(labels).map(ls =>
+          query[GrpcStub](s => lift(ls).forall(s.labels.contains))
+        )
+
+        BsonDocument(
+          "$and" -> BsonArray.fromIterable(
+            Vector(Some(scopeQuery), serviceQuery, queryPart, labelsPart).flatten
+          )
+        )
+      }
+      stubs <- grpcStubDAO.findChunk(stubQuery, page.getOrElse(0) * 20, 20, BsonDocument("created" -> -1))
       methodDescriptions <- grpcMethodDescriptionDAO.findByIds(stubs.map(_.methodDescriptionId)*)
       res = stubs.flatMap(stub =>
         methodDescriptions
@@ -455,7 +485,7 @@ final class AdminApiHandler(
           .map(description => GrpcStubView.makeFrom(stub, description))
           .toList
       )
-    } yield res*/
+    } yield res
 
   def createGrpcStub(body: CreateGrpcStubRequest): RIO[WLD, OperationResult[SID[GrpcStub]]] = {
     val requestSchemaBytes  = body.requestCodecs.unwrap
@@ -521,7 +551,7 @@ final class AdminApiHandler(
       vr = GrpcStub.validationRules(stub)
       _   <- ZIO.when(vr.nonEmpty)(ZIO.fail(ValidationError(vr)))
       res <- grpcStubDAO.insert(stub)
-      _   <- labelDAO.ensureLabels(methodDescription.service.value, stub.labels.to(Vector))
+      _   <- labelDAO.ensureLabels(methodDescription.service, stub.labels.to(Vector))
     } yield if (res > 0) OperationResult("success", stub.id) else OperationResult("nothing inserted")
   }
 
@@ -755,25 +785,30 @@ final class AdminApiHandler(
 
   def fetchGrpcStubsV4(
       page: Option[Int],
-      query: Option[String],
+      queryString: Option[String],
       labels: List[String]
   ): RIO[WLD, Vector[GrpcStub]] = {
-    /*
-    var queryDoc = prop[GrpcStub](_.scope) =/= Scope.Countdown.asInstanceOf[Scope] || prop[GrpcStub](_.times) > Option(
-      refineMV[NonNegative](0)
+    val baseQuery = query[GrpcStub](gs => gs.scope != lift(Scope.Countdown) || gs.times.!! > 0)
+
+    val queryPart = queryString.map(qs =>
+      query[GrpcStub](gs =>
+        gs.id == lift(qs) ||
+          Pattern.compile(lift(qs), Pattern.CASE_INSENSITIVE).matcher(gs.name).matches() ||
+          gs.methodDescriptionId == lift(qs)
+      )
     )
-    if (query.isDefined) {
-      val qs = query.get
-      val q = prop[GrpcStub](_.id) === SID[GrpcStub](qs).asInstanceOf[SID[GrpcStub]] ||
-        prop[GrpcStub](_.name).regex(qs, "i") ||
-        prop[GrpcStub](_.methodDescriptionId) === SID[GrpcMethodDescription](qs).asInstanceOf[SID[GrpcMethodDescription]]
-      queryDoc = queryDoc && q
-    }
-    if (labels.nonEmpty) {
-      queryDoc = queryDoc && (prop[GrpcStub](_.labels).containsAll(labels))
-    }*/
-    //TODO
-    grpcStubDAO.findChunk(BsonDocument(), page.getOrElse(0) * 20, 20, BsonDocument("created" -> -1))
+
+    val labelsPart = Option.when(labels.nonEmpty)(labels).map(ls =>
+      query[GrpcStub](gs => lift(ls).forall(gs.labels.contains))
+    )
+
+    val finalQuery = BsonDocument(
+      "$and" -> BsonArray.fromIterable(
+        Vector(Some(baseQuery), queryPart, labelsPart).flatten
+      )
+    )
+
+    grpcStubDAO.findChunk(finalQuery, page.getOrElse(0) * 20, 20, BsonDocument("created" -> -1))
   }
 
   def createGrpcStubV4(body: CreateGrpcStubRequestV4): RIO[WLD, OperationResult[SID[GrpcStub]]] =
@@ -822,7 +857,7 @@ final class AdminApiHandler(
       vr = GrpcStub.validationRules(stub)
       _   <- ZIO.when(vr.nonEmpty)(ZIO.fail(ValidationError(vr)))
       res <- grpcStubDAO.insert(stub)
-      _   <- labelDAO.ensureLabels(methodDescription.service.value, stub.labels.to(Vector))
+      _   <- labelDAO.ensureLabels(methodDescription.service, stub.labels.to(Vector))
     } yield if (res > 0) OperationResult("success", stub.id) else OperationResult("nothing inserted")
 
   def updateGrpcStubV4(
@@ -873,7 +908,7 @@ final class AdminApiHandler(
       vr = GrpcStub.validationRules(stub)
       _   <- ZIO.when(vr.nonEmpty)(ZIO.fail(ValidationError(vr)))
       res <- grpcStubDAO.patch(stubPatch)
-      _   <- labelDAO.ensureLabels(methodDescription.service.value, stub.labels.to(Vector))
+      _   <- labelDAO.ensureLabels(methodDescription.service, stub.labels.to(Vector))
     } yield if (res.successful) OperationResult("success", stub.id) else OperationResult("nothing updated")
 
   def getGrpcStubV4(id: SID[GrpcStub]): RIO[WLD, Option[GrpcStub]] =
@@ -887,25 +922,28 @@ final class AdminApiHandler(
 
   def fetchGrpcMethodDescriptions(
       page: Option[Int],
-      query: Option[String],
+      queryString: Option[String],
       service: Option[String],
   ): RIO[WLD, Vector[GrpcMethodDescription]] = {
-    /*
-    var queryDoc = Expression.empty: Expression[GrpcMethodDescription]
-    if (query.isDefined) {
-      val qs = query.get
-      val q =
-        prop[GrpcMethodDescription](_.id) === SID[GrpcMethodDescription](qs).asInstanceOf[SID[GrpcMethodDescription]] ||
-          prop[GrpcMethodDescription](_.methodName).regex(qs, "i")
-      queryDoc = queryDoc && q
-    }
-    val refService = service.flatMap(refineV[NonEmpty](_).toOption)
-    if (refService.isDefined) {
-      queryDoc = queryDoc && (prop[GrpcMethodDescription](_.service) === refService.get)
-    }*/
-    //TODO
+    val queryPart = queryString.map(qs =>
+      query[GrpcMethodDescription](gs =>
+        gs.id == lift(qs) ||
+        Pattern.compile(lift(qs), Pattern.CASE_INSENSITIVE).matcher(gs.service).matches()
+      )
+    )
+
+    val servicePart = service.map(svc =>
+      query[GrpcMethodDescription](_.service == lift(svc))
+    )
+
+    val finalQuery = BsonDocument(
+      "$and" -> BsonArray.fromIterable(
+        Vector(queryPart, servicePart).flatten
+      )
+    )
+
     grpcMethodDescriptionDAO.findChunk(
-      BsonDocument(),
+      finalQuery,
       page.getOrElse(0) * 20,
       20,
       BsonDocument("created" -> -1)

@@ -36,7 +36,7 @@ final case class GrpcStub(
     scope: Scope,
     created: Instant,
     times: Option[Int],
-    name: NonEmptyString,
+    name: String,
     response: GrpcStubResponse,
     seed: Option[Json],
     state: Option[Map[JsonOptic, Map[Keyword.Json, Json]]],

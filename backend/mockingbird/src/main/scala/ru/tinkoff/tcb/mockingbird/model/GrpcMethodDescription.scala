@@ -24,7 +24,7 @@ final case class GrpcMethodDescription(
     id: SID[GrpcMethodDescription],
     description: String,
     created: Instant,
-    service: NonEmptyString,
+    service: String,
     methodName: String,
     connectionType: GrpcConnectionType,
     proxyUrl: Option[String],

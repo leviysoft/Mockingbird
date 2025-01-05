@@ -28,7 +28,7 @@ final case class CreateGrpcStubRequest(
     @description("The number of possible triggers. Only relevant for scope=countdown")
     times: Option[NonNegInt] = Some(refineV[NonNegative].unsafeFrom(1)),
     @description("Service name")
-    service: NonEmptyString,
+    service: String,
     @description("gRPC base64 encoded request proto")
     requestCodecs: ByteArray.Type,
     @description("gRPC base64 encoded response proto")
