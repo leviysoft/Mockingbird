@@ -26,7 +26,6 @@ val circeUtils = (project in file("circe-utils"))
 val dataAccess = (project in file("dataAccess"))
   .settings(Settings.common)
   .settings(
-    scalacOptions += "-language:experimental.macros",
     libraryDependencies ++= Dependencies.alleycats ++ Dependencies.cats ++ Dependencies.zio ++ Dependencies.mouse ++ Dependencies.oolong ++ Seq(
       "com.beachape"                 %% "enumeratum"                      % "1.7.5",
       "org.mongodb.scala"            %% "mongo-scala-driver"              % Versions.mongoScalaDriver cross CrossVersion.for3Use2_13,
@@ -55,25 +54,26 @@ val mockingbird = (project in file("mockingbird"))
       Dependencies.logback
     ).flatten,
     libraryDependencies ++= Seq(
-      "com.github.pureconfig"         %% "pureconfig-core"     % "0.17.8",
-      "com.lihaoyi"                   %% "scalatags"           % "0.13.1",
-      "org.webjars.npm"                % "swagger-ui-dist"     % "3.32.5",
-      "eu.timepit"                    %% "fs2-cron-cron4s"     % "0.9.0",
-      "com.softwaremill.sttp.client4" %% "zio"                 % Versions.sttp,
-      "com.softwaremill.sttp.client4" %% "circe"               % Versions.sttp,
-      "org.apache.tika"                % "tika-core"           % "2.1.0",
-      "io.scalaland"                  %% "chimney"             % "1.6.0",
-      "com.ironcorelabs"              %% "cats-scalatest"      % "4.0.0" % Test,
-      "com.google.code.findbugs"       % "jsr305"              % "3.0.2" % Optional,
-      "com.github.dwickern"           %% "scala-nameof"        % "4.0.0" % Provided,
-      "com.github.os72"                % "protobuf-dynamic"    % "1.0.1",
-      "com.github.geirolz"            %% "advxml-core"         % "2.5.1",
-      "com.github.geirolz"            %% "advxml-xpath"        % "2.5.1",
-      "io.github.kitlangton"          %% "neotype"             % "0.3.8",
-      "com.softwaremill.common"       %% "tagging"             % "2.3.5",
-      "org.mozilla"                    % "rhino"               % "1.7.14",
-      "org.graalvm.polyglot"           % "js"                  % "23.1.+",
-      "org.slf4j"                      % "slf4j-api"           % "1.7.30" % Provided
+      "com.github.pureconfig"         %% "pureconfig-core"           % "0.17.8",
+      "com.github.pureconfig"         %% "pureconfig-generic-scala3" % "0.17.8",
+      "com.lihaoyi"                   %% "scalatags"                 % "0.13.1",
+      "org.webjars.npm"                % "swagger-ui-dist"           % "3.32.5",
+      "eu.timepit"                    %% "fs2-cron-cron4s"           % "0.9.0",
+      "com.softwaremill.sttp.client4" %% "zio"                       % Versions.sttp,
+      "com.softwaremill.sttp.client4" %% "circe"                     % Versions.sttp,
+      "org.apache.tika"                % "tika-core"                 % "2.1.0",
+      "io.scalaland"                  %% "chimney"                   % "1.6.0",
+      "com.ironcorelabs"              %% "cats-scalatest"            % "4.0.0" % Test,
+      "com.google.code.findbugs"       % "jsr305"                    % "3.0.2" % Optional,
+      "com.github.dwickern"           %% "scala-nameof"              % "4.0.0" % Provided,
+      "com.github.os72"                % "protobuf-dynamic"          % "1.0.1",
+      "com.github.geirolz"            %% "advxml-core"               % "2.5.1",
+      "com.github.geirolz"            %% "advxml-xpath"              % "2.5.1",
+      "io.github.kitlangton"          %% "neotype"                   % "0.3.8",
+      "com.softwaremill.common"       %% "tagging"                   % "2.3.5",
+      "org.mozilla"                    % "rhino"                     % "1.7.14",
+      "org.graalvm.polyglot"           % "js"                        % "23.1.+",
+      "org.slf4j"                      % "slf4j-api"                 % "1.7.30" % Provided
     ),
     Compile / unmanagedResourceDirectories += file("../frontend/dist")
   )

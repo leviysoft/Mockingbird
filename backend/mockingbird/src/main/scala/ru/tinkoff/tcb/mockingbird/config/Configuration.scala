@@ -1,14 +1,20 @@
 package ru.tinkoff.tcb.mockingbird.config
 
 import scala.concurrent.duration.FiniteDuration
-
 import com.github.dwickern.macros.NameOf.*
 import com.typesafe.config.Config
 import enumeratum.*
 import pureconfig.*
 import pureconfig.error.CannotConvert
+import pureconfig.generic.ProductHint
+import pureconfig.generic.semiauto.*
 
-final case class JsSandboxConfig(allowedClasses: Set[String] = Set()) derives ConfigReader
+final case class JsSandboxConfig(allowedClasses: Set[String] = Set())
+
+object JsSandboxConfig {
+    given ProductHint[JsSandboxConfig] = ProductHint[JsSandboxConfig](ConfigFieldMapping(CamelCase, CamelCase))
+    given ConfigReader[JsSandboxConfig] = deriveReader
+}
 
 final case class ServerConfig(
     interface: String,
@@ -17,7 +23,12 @@ final case class ServerConfig(
     healthCheckRoute: Option[String],
     sandbox: JsSandboxConfig = JsSandboxConfig(),
     vertx: Config
-) derives ConfigReader
+)
+
+object ServerConfig {
+    given ProductHint[ServerConfig] = ProductHint[ServerConfig](ConfigFieldMapping(CamelCase, CamelCase))
+    given ConfigReader[ServerConfig] = deriveReader
+}
 
 final case class SecurityConfig(secret: String) derives ConfigReader
 
@@ -37,7 +48,12 @@ final case class ProxyServerConfig(
     nonProxy: Seq[String] = Seq(),
     onlyProxy: Seq[String] = Seq(),
     auth: Option[ProxyServerAuth]
-) derives ConfigReader
+)
+
+object ProxyServerConfig {
+  given ProductHint[ProxyServerConfig] = ProductHint[ProxyServerConfig](ConfigFieldMapping(CamelCase, CamelCase))
+  given ConfigReader[ProxyServerConfig] = deriveReader
+}
 
 sealed trait HttpVersion extends EnumEntry
 object HttpVersion extends Enum[HttpVersion] {
@@ -63,9 +79,19 @@ final case class ProxyConfig(
     logOutgoingRequests: Boolean,
     disableAutoDecompressForRaw: Boolean,
     httpVersion: HttpVersion
-) derives ConfigReader
+)
 
-final case class EventConfig(fetchInterval: FiniteDuration, reloadInterval: FiniteDuration) derives ConfigReader
+object ProxyConfig {
+  given ProductHint[ProxyConfig] = ProductHint[ProxyConfig](ConfigFieldMapping(CamelCase, CamelCase))
+  given ConfigReader[ProxyConfig] = deriveReader
+}
+
+final case class EventConfig(fetchInterval: FiniteDuration, reloadInterval: FiniteDuration)
+
+object EventConfig {
+  given ProductHint[EventConfig] = ProductHint[EventConfig](ConfigFieldMapping(CamelCase, CamelCase))
+  given ConfigReader[EventConfig] = deriveReader
+}
 
 final case class MongoConfig(uri: String, collections: MongoCollections) derives ConfigReader
 
@@ -79,13 +105,23 @@ final case class MongoCollections(
     grpcMethodDescription: String,
     source: String,
     destination: String
-) derives ConfigReader
+)
+
+object MongoCollections {
+  given ProductHint[MongoCollections] = ProductHint[MongoCollections](ConfigFieldMapping(CamelCase, CamelCase))
+  given ConfigReader[MongoCollections] = deriveReader
+}
 
 final case class TracingConfig(
     required: List[String] = List.empty,
     incomingHeaders: Map[String, String] = Map.empty,
     outcomingHeaders: Map[String, String] = Map.empty,
-) derives ConfigReader
+)
+
+object TracingConfig {
+  given ProductHint[TracingConfig] = ProductHint[TracingConfig](ConfigFieldMapping(CamelCase, CamelCase))
+  given ConfigReader[TracingConfig] = deriveReader
+}
 
 final case class MockingbirdConfiguration(
     server: ServerConfig,

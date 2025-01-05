@@ -102,7 +102,7 @@ object Dependencies {
     "oolong-bson",
     "oolong-bson-refined",
     "oolong-mongo",
-  ).map("io.github.leviysoft" %% _ % "0.4.3")
+  ).map("io.github.leviysoft" %% _ % "0.4.4")
 
   lazy val logback = Seq(
     "logback-core",

@@ -69,12 +69,14 @@ class EnumBsonHandlerSpec extends AnyFunSpec with Matchers {
       }
     }
 
-    def writeTests(theWriter: BsonEncoder[Dummy]): Unit =
+    def writeTests(theWriter: BsonEncoder[Dummy]): Unit = {
+      given BsonEncoder[Dummy] = theWriter
       it("should write enum values to BSONString") {
         expectedWrites.foreach { case (k, v) =>
           k.bson shouldBe BsonString(v)
         }
       }
+    }
 
     describe("BSONReader") {
       readTests(reader)

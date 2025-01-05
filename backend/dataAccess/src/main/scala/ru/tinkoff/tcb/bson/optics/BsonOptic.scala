@@ -19,7 +19,7 @@ final case class BsonOptic private[optics] (private val BsonPath: Seq[Either[Int
     if (validate(bson))
       deferModify { case _ => v }.apply(bson)
     else {
-      bson +: BsonPath.foldRight(v)((p, b) =>
+      bson :+ BsonPath.foldRight(v)((p, b) =>
         p match {
           case Right(f) => BsonDocument(f -> b)
           case Left(i)  => BsonArray.fromIterable(Seq.fill(i)(BsonNull()) :+ b)
