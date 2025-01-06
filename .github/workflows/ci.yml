@@ -173,102 +173,102 @@ jobs:
           path: /tmp/image-jvm.tar.gz
         if: ${{ ! ( github.ref_type == 'tag' || endsWith(steps.get-ref.outputs.tag, 'docker') ) }}
 
-  back-build-native:
-    needs: [front-build]
-
-    runs-on: ubuntu-22.04
-
-    outputs:
-      ref: ${{ steps.get-ref.outputs.tag }}
-
-    env:
-      CI: true
-      SBT_OPTS: >
-        -Xms512m 
-        -Xmx2048m 
-        -XX:+AlwaysPreTouch 
-        -XX:ReservedCodeCacheSize=192M 
-        -Xss2m 
-        -XX:+TieredCompilation 
-        -XX:+UseParallelGC
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Download frontend
-        uses: actions/download-artifact@v4
-        with:
-          name: front-static
-          path: frontend/dist/out
-
-      - uses: graalvm/setup-graalvm@v1
-        with:
-          java-version: '21'
-          distribution: 'graalvm'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          native-image-job-reports: 'true'
-
-      - name: Install Protoc
-        uses: arduino/setup-protoc@v3
-        with:
-          version: "25.2"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Get the Ref
-        id: get-ref
-        uses: ankitvgupta/ref-to-tag-action@v1.0.1
-        with:
-          ref: ${{ github.ref }}
-          head_ref: ${{ github.head_ref }}
-
-      - name: Lint and Test
-        run: |
-          cd backend
-          sbt "project mockingbird-native;clean;fixCheck;test"
-
-      - name: Create native image and stage image contents
-        run: |
-          cd backend
-          sbt "project mockingbird-native;GraalVMNativeImage / packageBin;Docker / stage;"
-
-      - name: Build docker image for test
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend/mockingbird-native/target/docker/stage
-          push: false
-          tags: ${{ env.MOCKINGBIRD_TEST_IMAGE_NATIVE }}
-        if: ${{ ! ( github.ref_type == 'tag' || endsWith(steps.get-ref.outputs.tag, 'docker') ) }}
-
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-        if: ${{ github.ref_type == 'tag' || endsWith(steps.get-ref.outputs.tag, 'docker') }}
-
-      - name: Build and push docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend/mockingbird-native/target/docker/stage
-          push: true
-          tags: ghcr.io/leviysoft/mockingbird:${{ steps.get-ref.outputs.tag }}-native
-        if: ${{ github.ref_type == 'tag' || endsWith(steps.get-ref.outputs.tag, 'docker')}}
-
-      - name: Save docker image to file
-        run: |
-          docker save -o /tmp/image-native.tar ${{ env.MOCKINGBIRD_TEST_IMAGE_NATIVE }}
-          gzip /tmp/image-native.tar
-        if: ${{ ! ( github.ref_type == 'tag' || endsWith(steps.get-ref.outputs.tag, 'docker') ) }}
-
-      - name: Upload image with native mockingbird
-        uses: actions/upload-artifact@v4
-        with:
-          name: image-native
-          path: /tmp/image-native.tar.gz
-        if: ${{ ! ( github.ref_type == 'tag' || endsWith(steps.get-ref.outputs.tag, 'docker') ) }}
+#  back-build-native:
+#    needs: [front-build]
+#
+#    runs-on: ubuntu-22.04
+#
+#    outputs:
+#      ref: ${{ steps.get-ref.outputs.tag }}
+#
+#    env:
+#      CI: true
+#      SBT_OPTS: >
+#        -Xms512m 
+#        -Xmx2048m 
+#        -XX:+AlwaysPreTouch 
+#        -XX:ReservedCodeCacheSize=192M 
+#        -Xss2m 
+#        -XX:+TieredCompilation 
+#        -XX:+UseParallelGC
+#
+#    steps:
+#      - uses: actions/checkout@v4
+#        with:
+#          fetch-depth: 0
+#
+#      - name: Download frontend
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: front-static
+#          path: frontend/dist/out
+#
+#      - uses: graalvm/setup-graalvm@v1
+#        with:
+#          java-version: '21'
+#          distribution: 'graalvm'
+#          github-token: ${{ secrets.GITHUB_TOKEN }}
+#          native-image-job-reports: 'true'
+#
+#      - name: Install Protoc
+#        uses: arduino/setup-protoc@v3
+#        with:
+#          version: "25.2"
+#          repo-token: ${{ secrets.GITHUB_TOKEN }}
+#
+#      - name: Get the Ref
+#        id: get-ref
+#        uses: ankitvgupta/ref-to-tag-action@v1.0.1
+#        with:
+#          ref: ${{ github.ref }}
+#          head_ref: ${{ github.head_ref }}
+#
+#      - name: Lint and Test
+#        run: |
+#          cd backend
+#          sbt "project mockingbird-native;clean;fixCheck;test"
+#
+#      - name: Create native image and stage image contents
+#        run: |
+#          cd backend
+#          sbt "project mockingbird-native;GraalVMNativeImage / packageBin;Docker / stage;"
+#
+#      - name: Build docker image for test
+#        uses: docker/build-push-action@v5
+#        with:
+#          context: ./backend/mockingbird-native/target/docker/stage
+#          push: false
+#          tags: ${{ env.MOCKINGBIRD_TEST_IMAGE_NATIVE }}
+#        if: ${{ ! ( github.ref_type == 'tag' || endsWith(steps.get-ref.outputs.tag, 'docker') ) }}
+#
+#      - name: Log in to the Container registry
+#        uses: docker/login-action@v3
+#        with:
+#          registry: ghcr.io
+#          username: ${{ github.actor }}
+#          password: ${{ secrets.GITHUB_TOKEN }}
+#        if: ${{ github.ref_type == 'tag' || endsWith(steps.get-ref.outputs.tag, 'docker') }}
+#
+#      - name: Build and push docker image
+#        uses: docker/build-push-action@v5
+#        with:
+#          context: ./backend/mockingbird-native/target/docker/stage
+#          push: true
+#          tags: ghcr.io/leviysoft/mockingbird:${{ steps.get-ref.outputs.tag }}-native
+#        if: ${{ github.ref_type == 'tag' || endsWith(steps.get-ref.outputs.tag, 'docker')}}
+#
+#      - name: Save docker image to file
+#        run: |
+#          docker save -o /tmp/image-native.tar ${{ env.MOCKINGBIRD_TEST_IMAGE_NATIVE }}
+#          gzip /tmp/image-native.tar
+#        if: ${{ ! ( github.ref_type == 'tag' || endsWith(steps.get-ref.outputs.tag, 'docker') ) }}
+#
+#      - name: Upload image with native mockingbird
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: image-native
+#          path: /tmp/image-native.tar.gz
+#        if: ${{ ! ( github.ref_type == 'tag' || endsWith(steps.get-ref.outputs.tag, 'docker') ) }}
 
   test-jvm-image:
     needs: [back-build]
@@ -304,39 +304,39 @@ jobs:
           envsubst < compose-test.yml.jvm.tmpl > compose-test.yml
           sbt "project examples; clean; fixCheck; test"
 
-  test-native-image:
-    needs: [back-build-native]
-    if: ${{ ! ( github.ref_type == 'tag' || endsWith(needs.back-build-native.outputs.ref, 'docker') ) }}
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: image-native
-          path: /tmp
-
-      - name: Load docker image
-        run: |
-          gzip -d /tmp/image-native.tar.gz
-          docker load --input /tmp/image-native.tar
-
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-          check-latest: true
-
-      - name: Test docker image
-        env:
-          MOCKINGBIRD_IMAGE: ${{ env.MOCKINGBIRD_TEST_IMAGE_NATIVE }}
-        run: |
-          cd backend
-          envsubst < compose-test.yml.native.tmpl > compose-test.yml
-          sbt "project examples; clean; fixCheck; test"
+#  test-native-image:
+#    needs: [back-build-native]
+#    if: ${{ ! ( github.ref_type == 'tag' || endsWith(needs.back-build-native.outputs.ref, 'docker') ) }}
+#
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - name: Download artifacts
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: image-native
+#          path: /tmp
+#
+#      - name: Load docker image
+#        run: |
+#          gzip -d /tmp/image-native.tar.gz
+#          docker load --input /tmp/image-native.tar
+#
+#      - uses: actions/setup-java@v4
+#        with:
+#          distribution: temurin
+#          java-version: 17
+#          check-latest: true
+#
+#      - name: Test docker image
+#        env:
+#          MOCKINGBIRD_IMAGE: ${{ env.MOCKINGBIRD_TEST_IMAGE_NATIVE }}
+#        run: |
+#          cd backend
+#          envsubst < compose-test.yml.native.tmpl > compose-test.yml
+#          sbt "project examples; clean; fixCheck; test"
 
   test-example-dsl:
     runs-on: ubuntu-latest

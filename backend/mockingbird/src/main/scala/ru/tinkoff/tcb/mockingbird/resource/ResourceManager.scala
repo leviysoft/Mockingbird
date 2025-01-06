@@ -1,9 +1,10 @@
 package ru.tinkoff.tcb.mockingbird.resource
 
-import scala.annotation.nowarn
 import scala.util.control.NonFatal
 
 import mouse.option.*
+import neotype.*
+import oolong.bson.given
 import sttp.client4.{Backend as SttpBackend, *}
 import sttp.model.Method
 import zio.managed.*
@@ -25,7 +26,6 @@ final class ResourceManager(
 ) {
   private val log = MDCLogging.`for`[WLD](this)
 
-  @nowarn("cat=other-match-analysis")
   def startup(): URIO[WLD, Unit] =
     (for {
       sources      <- sourceDAO.getAll
@@ -33,7 +33,7 @@ final class ResourceManager(
       inits = sources.flatMap(_.init.map(_.toVector).getOrElse(Vector.empty)) ++ destinations.flatMap(
         _.init.map(_.toVector).getOrElse(Vector.empty)
       )
-      _ <- ZIO.validateDiscard(inits)(execute).mapError(CompoundError)
+      _ <- ZIO.validateDiscard(inits)(execute).mapError(CompoundError.apply)
     } yield ()).catchAll {
       case CompoundError(errs) if errs.forall(recover.isDefinedAt) =>
         ZIO.foreachDiscard(errs)(recover)
@@ -47,7 +47,6 @@ final class ResourceManager(
         log.errorCause("Fatal error", thr) *> ZIO.die(thr)
     }
 
-  @nowarn("cat=other-match-analysis")
   def shutdown(): URIO[WLD, Unit] =
     (for {
       sources      <- sourceDAO.getAll
@@ -55,7 +54,7 @@ final class ResourceManager(
       shutdowns = sources.flatMap(_.shutdown.map(_.toVector).getOrElse(Vector.empty)) ++ destinations.flatMap(
         _.shutdown.map(_.toVector).getOrElse(Vector.empty)
       )
-      _ <- ZIO.validateDiscard(shutdowns)(execute).mapError(CompoundError)
+      _ <- ZIO.validateDiscard(shutdowns)(execute).mapError(CompoundError.apply)
     } yield ()).catchAll {
       case CompoundError(errs) if errs.forall(recover.isDefinedAt) =>
         ZIO.foreachDiscard(errs)(recover)
@@ -71,9 +70,9 @@ final class ResourceManager(
 
   def execute(req: ResourceRequest): Task[String] =
     (basicRequest
-      .headers(req.headers.view.mapValues(_.asString).toMap))
-      .pipe(r => req.body.cata(b => r.body(b.asString), r))
-      .method(Method(req.method.entryName), uri"${req.url.asString}")
+      .headers(req.headers.view.mapValues(_.unwrap).toMap))
+      .pipe(r => req.body.cata(b => r.body(b.unwrap), r))
+      .method(Method(req.method.entryName), uri"${req.url.unwrap}")
       .response(asString("utf-8"))
       .readTimeout(30.seconds.asScala)
       .send(httpBackend)
@@ -82,14 +81,14 @@ final class ResourceManager(
       .mapError {
         case Right(err) => err
         case Left(err) =>
-          ResourceManagementError(s"The request to ${req.url.asString} ended with an error ($err)")
+          ResourceManagementError(s"The request to ${req.url.unwrap} ended with an error ($err)")
       }
 
   def reinitialize(sourceId: SID[SourceConfiguration]): URIO[WLD, Unit] =
     (for {
       source <- sourceDAO.findById(sourceId).someOrFail(ResourceManagementError(s"Can't find source with id $sourceId"))
       inits = source.init.map(_.toVector).getOrElse(Vector.empty)
-      _ <- ZIO.validateDiscard(inits)(execute).mapError(CompoundError)
+      _ <- ZIO.validateDiscard(inits)(execute).mapError(CompoundError.apply)
     } yield ()).catchAll {
       case CompoundError(errs) if errs.forall(recover.isDefinedAt) =>
         ZIO.foreachDiscard(errs)(recover)

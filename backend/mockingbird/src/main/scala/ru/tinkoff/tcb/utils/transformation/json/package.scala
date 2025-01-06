@@ -98,7 +98,7 @@ package object json {
     def substitute(values: Node): Json =
       nodeTemplater(values).pipe { templater =>
         transformValues { case js @ JsonString(str) =>
-          templater.andThen(Json.fromString _).applyOrElse(str, (_: String) => js)
+          templater.andThen(Json.fromString).applyOrElse(str, (_: String) => js)
         }.result
       }
 

@@ -1,13 +1,10 @@
 package ru.tinkoff.tcb.bson.optics
 
-import scala.annotation.nowarn
 import scala.util.Try
 
+import oolong.bson.*
 import org.mongodb.scala.bson.*
 
-import ru.tinkoff.tcb.bson.*
-
-@nowarn("cat=scala3-migration")
 final case class BsonOptic private[optics] (private val BsonPath: Seq[Either[Int, String]]) {
   def \(field: String): BsonOptic = new BsonOptic(BsonPath :+ Right(field))
   def \(index: Int): BsonOptic    = new BsonOptic(BsonPath :+ Left(index))
@@ -21,7 +18,7 @@ final case class BsonOptic private[optics] (private val BsonPath: Seq[Either[Int
     if (validate(bson))
       deferModify { case _ => v }.apply(bson)
     else {
-      bson +: BsonPath.foldRight(v)((p, b) =>
+      bson :+ BsonPath.foldRight(v)((p, b) =>
         p match {
           case Right(f) => BsonDocument(f -> b)
           case Left(i)  => BsonArray.fromIterable(Seq.fill(i)(BsonNull()) :+ b)

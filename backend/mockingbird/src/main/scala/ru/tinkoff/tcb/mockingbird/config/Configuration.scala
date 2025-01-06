@@ -8,9 +8,14 @@ import enumeratum.*
 import pureconfig.*
 import pureconfig.error.CannotConvert
 import pureconfig.generic.ProductHint
-import pureconfig.generic.auto.*
+import pureconfig.generic.semiauto.*
 
 final case class JsSandboxConfig(allowedClasses: Set[String] = Set())
+
+object JsSandboxConfig {
+  given ProductHint[JsSandboxConfig] = ProductHint[JsSandboxConfig](ConfigFieldMapping(CamelCase, CamelCase))
+  given ConfigReader[JsSandboxConfig] = deriveReader
+}
 
 final case class ServerConfig(
     interface: String,
@@ -21,9 +26,14 @@ final case class ServerConfig(
     vertx: Config
 )
 
-final case class SecurityConfig(secret: String)
+object ServerConfig {
+  given ProductHint[ServerConfig] = ProductHint[ServerConfig](ConfigFieldMapping(CamelCase, CamelCase))
+  given ConfigReader[ServerConfig] = deriveReader
+}
 
-final case class ProxyServerAuth(user: String, password: String)
+final case class SecurityConfig(secret: String) derives ConfigReader
+
+final case class ProxyServerAuth(user: String, password: String) derives ConfigReader
 
 sealed trait ProxyServerType extends EnumEntry
 object ProxyServerType extends Enum[ProxyServerType] with PureconfigEnum[ProxyServerType] {
@@ -40,6 +50,11 @@ final case class ProxyServerConfig(
     onlyProxy: Seq[String] = Seq(),
     auth: Option[ProxyServerAuth]
 )
+
+object ProxyServerConfig {
+  given ProductHint[ProxyServerConfig] = ProductHint[ProxyServerConfig](ConfigFieldMapping(CamelCase, CamelCase))
+  given ConfigReader[ProxyServerConfig] = deriveReader
+}
 
 sealed trait HttpVersion extends EnumEntry
 object HttpVersion extends Enum[HttpVersion] {
@@ -67,9 +82,19 @@ final case class ProxyConfig(
     httpVersion: HttpVersion
 )
 
+object ProxyConfig {
+  given ProductHint[ProxyConfig] = ProductHint[ProxyConfig](ConfigFieldMapping(CamelCase, CamelCase))
+  given ConfigReader[ProxyConfig] = deriveReader
+}
+
 final case class EventConfig(fetchInterval: FiniteDuration, reloadInterval: FiniteDuration)
 
-final case class MongoConfig(uri: String, collections: MongoCollections)
+object EventConfig {
+  given ProductHint[EventConfig] = ProductHint[EventConfig](ConfigFieldMapping(CamelCase, CamelCase))
+  given ConfigReader[EventConfig] = deriveReader
+}
+
+final case class MongoConfig(uri: String, collections: MongoCollections) derives ConfigReader
 
 final case class MongoCollections(
     stub: String,
@@ -83,11 +108,21 @@ final case class MongoCollections(
     destination: String
 )
 
+object MongoCollections {
+  given ProductHint[MongoCollections] = ProductHint[MongoCollections](ConfigFieldMapping(CamelCase, CamelCase))
+  given ConfigReader[MongoCollections] = deriveReader
+}
+
 final case class TracingConfig(
     required: List[String] = List.empty,
     incomingHeaders: Map[String, String] = Map.empty,
     outcomingHeaders: Map[String, String] = Map.empty,
 )
+
+object TracingConfig {
+  given ProductHint[TracingConfig] = ProductHint[TracingConfig](ConfigFieldMapping(CamelCase, CamelCase))
+  given ConfigReader[TracingConfig] = deriveReader
+}
 
 final case class MockingbirdConfiguration(
     server: ServerConfig,
@@ -96,11 +131,11 @@ final case class MockingbirdConfiguration(
     proxy: ProxyConfig,
     event: EventConfig,
     tracing: TracingConfig,
-)
+) derives ConfigReader
 
 object MockingbirdConfiguration {
-  implicit private def hint[T]: ProductHint[T] =
-    ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
+  // implicit private def hint[T]: ProductHint[T] =
+  // ProductHint[T](ConfigFieldMapping(CamelCase, CamelCase))
 
   def load(): MockingbirdConfiguration =
     load(ConfigSource.default.at("ru.tinkoff.tcb"))

@@ -1,16 +1,15 @@
 package ru.tinkoff.tcb.mockingbird.model
 
-import derevo.derive
 import glass.Subset
 import glass.macros.GenSubset
 import sttp.model.Part
 import tofu.logging.Loggable
+import tofu.logging.derivation.derived
 import tofu.logging.derivation.loggable
 
 import ru.tinkoff.tcb.protocol.log.*
 
-@derive(loggable)
-sealed trait RequestBody
+sealed trait RequestBody derives Loggable
 object RequestBody
 
 case object AbsentRequestBody extends RequestBody {
@@ -29,8 +28,7 @@ object SimpleRequestBody {
     Loggable.stringValue.contramap[SimpleRequestBody](_.value)
 }
 
-@derive(loggable)
-final case class MultipartRequestBody(value: Seq[Part[String]]) extends RequestBody
+final case class MultipartRequestBody(value: Seq[Part[String]]) extends RequestBody derives Loggable
 object MultipartRequestBody {
   final val subset: Subset[RequestBody, MultipartRequestBody] = GenSubset[RequestBody, MultipartRequestBody]
 }

@@ -2,9 +2,9 @@ package ru.tinkoff.tcb.bson
 
 import scala.jdk.CollectionConverters.*
 
+import oolong.bson.*
 import org.mongodb.scala.bson.*
 
-import ru.tinkoff.tcb.bson.BsonEncoder.ops.*
 import ru.tinkoff.tcb.generic.RootOptionFields
 
 object PatchGenerator {

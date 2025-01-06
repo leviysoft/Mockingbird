@@ -5,12 +5,12 @@ import scala.util.control.NonFatal
 import scala.xml.Node
 
 import eu.timepit.refined.*
-import eu.timepit.refined.api.Refined
 import io.circe.Json
 import io.circe.syntax.*
-import io.estatico.newtype.ops.*
 import mouse.boolean.*
 import mouse.option.*
+import oolong.bson.given
+import org.mongodb.scala.bson.Document
 import sttp.client4.{Backend as SttpBackend, *}
 import sttp.client4.circe.*
 import sttp.model.HeaderNames
@@ -18,8 +18,6 @@ import sttp.model.Method
 import sttp.model.QueryParams
 import zio.interop.catz.core.*
 
-import ru.tinkoff.tcb.criteria.*
-import ru.tinkoff.tcb.criteria.Typed.*
 import ru.tinkoff.tcb.logging.MDCLogging
 import ru.tinkoff.tcb.mockingbird.config.ProxyConfig
 import ru.tinkoff.tcb.mockingbird.dal.HttpStubDAO
@@ -31,7 +29,6 @@ import ru.tinkoff.tcb.mockingbird.model.BinaryResponse
 import ru.tinkoff.tcb.mockingbird.model.ByteArray
 import ru.tinkoff.tcb.mockingbird.model.HttpMethod
 import ru.tinkoff.tcb.mockingbird.model.HttpStatusCodeRange
-import ru.tinkoff.tcb.mockingbird.model.HttpStub
 import ru.tinkoff.tcb.mockingbird.model.HttpStubResponse
 import ru.tinkoff.tcb.mockingbird.model.JsonProxyResponse
 import ru.tinkoff.tcb.mockingbird.model.MultipartRequestBody
@@ -44,7 +41,6 @@ import ru.tinkoff.tcb.mockingbird.model.SimpleRequestBody
 import ru.tinkoff.tcb.mockingbird.model.XmlProxyResponse
 import ru.tinkoff.tcb.mockingbird.scenario.CallbackEngine
 import ru.tinkoff.tcb.mockingbird.scenario.ScenarioEngine
-import ru.tinkoff.tcb.protocol.log.*
 import ru.tinkoff.tcb.utils.any.*
 import ru.tinkoff.tcb.utils.circe.optics.JsonOptic
 import ru.tinkoff.tcb.utils.regex.*
@@ -76,7 +72,7 @@ final class PublicApiHandler(
       body: RequestBody
   ): RIO[WLD, HttpStubResponse] = {
     val queryObject = queryParamsToJsonObject(query)
-    val f           = resolver.findStubAndState(method, path, headers, queryObject, body) _
+    val f           = resolver.findStubAndState(method, path, headers, queryObject, body)
 
     for {
       _ <- Tracing.update(_.addToPayload("path" -> path, "method" -> method.entryName))
@@ -142,7 +138,9 @@ final class PublicApiHandler(
               )
           )
       }
-      _ <- ZIO.when(stub.scope == Scope.Countdown)(stubDAO.updateById(stub.id, prop[HttpStub](_.times).inc(-1)))
+      _ <- ZIO.when(stub.scope == Scope.Countdown)(
+        stubDAO.updateById(stub.id, Document("$inc" -> Document("times" -> -1.bson)))
+      )
       _ <- ZIO.when(stub.callback.isDefined)(
         engine
           .recurseCallback(state, stub.callback.get, data, xdata)
@@ -202,7 +200,7 @@ final class PublicApiHandler(
         .readTimeout(timeout.getOrElse(1.minute.asScala))
         .send(httpBackend)
     } yield BinaryResponse(
-      Refined.unsafeApply[Int, HttpStatusCodeRange](response.code.code),
+      refineV[HttpStatusCodeRange].unsafeFrom(response.code.code),
       response.headers
         .filterNot(h => proxyConfig.excludedResponseHeaders(h.name))
         .pipe { hs =>
@@ -210,7 +208,7 @@ final class PublicApiHandler(
         }
         .map(h => h.name -> h.value)
         .toMap,
-      response.body.coerce[ByteArray],
+      ByteArray(response.body),
       delay
     )
   }
@@ -261,7 +259,7 @@ final class PublicApiHandler(
     } yield response.body match {
       case Right(jsonResponse) =>
         RawResponse(
-          Refined.unsafeApply[Int, HttpStatusCodeRange](response.code.code),
+          refineV[HttpStatusCodeRange].unsafeFrom(response.code.code),
           response.headers
             .filterNot(h => proxyConfig.excludedResponseHeaders(h.name))
             .filterNot(h => headersDependingOnContentLength.exists(h.is))
@@ -271,7 +269,7 @@ final class PublicApiHandler(
           delay
         )
       case Left(error) =>
-        RawResponse(refineMV(500), Map(), error.body, delay)
+        RawResponse(refineV[HttpStatusCodeRange].unsafeFrom(500), Map(), error.body, delay)
     }
   }
 
@@ -322,17 +320,17 @@ final class PublicApiHandler(
     } yield response.body match {
       case Right(xmlResponse) =>
         RawResponse(
-          Refined.unsafeApply[Int, HttpStatusCodeRange](response.code.code),
+          refineV[HttpStatusCodeRange].unsafeFrom(response.code.code),
           response.headers
             .filterNot(h => proxyConfig.excludedResponseHeaders(h.name))
             .filterNot(h => headersDependingOnContentLength.exists(h.is))
             .map(h => h.name -> h.value)
             .toMap,
-          xmlResponse.patchFromValues(jData, xData, patch.map { case (k, v) => k.toZoom -> v }).toString(),
+          xmlResponse.patchFromValues(jData, xData, patch.map { case (k, v) => k.toZoom -> v }).toString,
           delay
         )
       case Left(error) =>
-        RawResponse(refineMV(500), Map(), error, delay)
+        RawResponse(refineV[HttpStatusCodeRange].unsafeFrom(500), Map(), error, delay)
     }
   }
 }

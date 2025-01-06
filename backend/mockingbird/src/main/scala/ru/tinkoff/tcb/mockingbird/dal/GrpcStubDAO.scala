@@ -2,7 +2,6 @@ package ru.tinkoff.tcb.mockingbird.dal
 
 import scala.annotation.implicitNotFound
 
-import cats.tagless.autoFunctorK
 import com.github.dwickern.macros.NameOf.*
 import org.mongodb.scala.MongoCollection
 import org.mongodb.scala.bson.BsonDocument
@@ -13,7 +12,6 @@ import ru.tinkoff.tcb.mongo.DAOBase
 import ru.tinkoff.tcb.mongo.MongoDAO
 
 @implicitNotFound("Could not find an instance of GrpcStubDAO for ${F}")
-@autoFunctorK
 trait GrpcStubDAO[F[_]] extends MongoDAO[F, GrpcStub]
 
 object GrpcStubDAO

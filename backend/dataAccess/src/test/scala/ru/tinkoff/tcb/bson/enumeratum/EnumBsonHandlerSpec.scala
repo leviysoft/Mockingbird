@@ -1,12 +1,10 @@
 package ru.tinkoff.tcb.bson.enumeratum
 
+import oolong.bson.*
 import org.mongodb.scala.bson.*
 import org.scalatest.OptionValues.*
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
-
-import ru.tinkoff.tcb.bson.BsonDecoder
-import ru.tinkoff.tcb.bson.BsonEncoder
 
 class EnumBsonHandlerSpec extends AnyFunSpec with Matchers {
   testScenario(
@@ -69,12 +67,14 @@ class EnumBsonHandlerSpec extends AnyFunSpec with Matchers {
       }
     }
 
-    def writeTests(theWriter: BsonEncoder[Dummy]): Unit =
+    def writeTests(theWriter: BsonEncoder[Dummy]): Unit = {
+      given BsonEncoder[Dummy] = theWriter
       it("should write enum values to BSONString") {
         expectedWrites.foreach { case (k, v) =>
-          theWriter.toBson(k) shouldBe BsonString(v)
+          k.bson shouldBe BsonString(v)
         }
       }
+    }
 
     describe("BSONReader") {
       readTests(reader)

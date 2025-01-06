@@ -5,17 +5,16 @@ import cats.data.ValidatedNel
 import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.Json
+import oolong.bson.*
+import oolong.bson.given
 import org.bson.BsonInvalidOperationException
 import sttp.tapir.Schema
 
-import ru.tinkoff.tcb.bson.BsonDecoder
-import ru.tinkoff.tcb.bson.BsonEncoder
 import ru.tinkoff.tcb.circe.bson.*
 import ru.tinkoff.tcb.generic.RootOptionFields
 import ru.tinkoff.tcb.predicatedsl.Keyword
 import ru.tinkoff.tcb.predicatedsl.PredicateConstructionError
 import ru.tinkoff.tcb.predicatedsl.json.JsonPredicate
-import ru.tinkoff.tcb.protocol.bson.*
 import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.circe.optics.JLens
 import ru.tinkoff.tcb.utils.webform.toJson

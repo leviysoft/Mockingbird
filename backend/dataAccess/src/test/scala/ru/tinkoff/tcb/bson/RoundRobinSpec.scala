@@ -2,12 +2,12 @@ package ru.tinkoff.tcb.bson
 
 import scala.util.matching.Regex
 
+import oolong.bson.*
+import oolong.bson.given
 import org.scalactic.Equality
 import org.scalatest.TryValues
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-
-import ru.tinkoff.tcb.bson.BsonEncoder.ops.*
 
 class RoundRobinSpec extends AnyFunSuite with Matchers with TryValues {
   implicit private val regexEquality: Equality[Regex] =

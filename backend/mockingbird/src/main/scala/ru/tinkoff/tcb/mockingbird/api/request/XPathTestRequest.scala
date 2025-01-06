@@ -1,12 +1,10 @@
 package ru.tinkoff.tcb.mockingbird.api.request
 
-import derevo.circe.decoder
-import derevo.circe.encoder
-import derevo.derive
-import sttp.tapir.derevo.schema
+import io.circe.Decoder
+import io.circe.Encoder
+import sttp.tapir.Schema
 
 import ru.tinkoff.tcb.utils.xml.XMLString
 import ru.tinkoff.tcb.xpath.SXpath
 
-@derive(decoder, encoder, schema)
-final case class XPathTestRequest(xml: XMLString, path: SXpath)
+final case class XPathTestRequest(xml: XMLString.Type, path: SXpath) derives Decoder, Encoder, Schema

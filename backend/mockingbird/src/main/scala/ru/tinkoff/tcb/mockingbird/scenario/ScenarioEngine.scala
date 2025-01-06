@@ -9,13 +9,14 @@ import io.circe.Json
 import io.circe.syntax.*
 import mouse.boolean.*
 import mouse.option.*
+import neotype.*
+import oolong.bson.given
+import org.mongodb.scala.bson.Document
 import sttp.client4.{Backend as SttpBackend, *}
 import sttp.client4.circe.*
 import sttp.model.Method
 import zio.interop.catz.core.*
 
-import ru.tinkoff.tcb.criteria.*
-import ru.tinkoff.tcb.criteria.Typed.*
 import ru.tinkoff.tcb.logging.MDCLogging
 import ru.tinkoff.tcb.mockingbird.api.Tracing
 import ru.tinkoff.tcb.mockingbird.api.WLD
@@ -34,20 +35,19 @@ import ru.tinkoff.tcb.mockingbird.model.JsonOutput
 import ru.tinkoff.tcb.mockingbird.model.MessageCallback
 import ru.tinkoff.tcb.mockingbird.model.PersistentState
 import ru.tinkoff.tcb.mockingbird.model.RawOutput
-import ru.tinkoff.tcb.mockingbird.model.Scenario
 import ru.tinkoff.tcb.mockingbird.model.ScenarioOutput
 import ru.tinkoff.tcb.mockingbird.model.Scope
 import ru.tinkoff.tcb.mockingbird.model.SourceConfiguration
 import ru.tinkoff.tcb.mockingbird.model.XMLCallbackRequest
 import ru.tinkoff.tcb.mockingbird.model.XmlOutput
 import ru.tinkoff.tcb.mockingbird.stream.SDFetcher
-import ru.tinkoff.tcb.protocol.log.*
 import ru.tinkoff.tcb.utils.id.SID
 import ru.tinkoff.tcb.utils.sandboxing.GraalJsSandbox
 import ru.tinkoff.tcb.utils.transformation.json.*
 import ru.tinkoff.tcb.utils.transformation.string.*
 import ru.tinkoff.tcb.utils.transformation.xml.*
 import ru.tinkoff.tcb.utils.xml.SafeXML
+import ru.tinkoff.tcb.utils.xml.XMLStringSyntax
 import ru.tinkoff.tcb.utils.xml.emptyNode
 import ru.tinkoff.tcb.utils.xttp.*
 
@@ -71,7 +71,7 @@ final class ScenarioEngine(
   private val log = MDCLogging.`for`[WLD](this)
 
   def perform(source: SID[SourceConfiguration], message: String): RIO[WLD, Unit] = {
-    val f = resolver.findScenarioAndState(source, message) _
+    val f = resolver.findScenarioAndState(source, message)
 
     for {
       _ <- Tracing.update(_.addToPayload(("source" -> source)))
@@ -106,7 +106,7 @@ final class ScenarioEngine(
         sendTo(dest, out, data, xdata)
       }
       _ <- ZIO.when(scenario.scope == Scope.Countdown)(
-        scenarioDAO.updateById(scenario.id, prop[Scenario](_.times).inc(-1))
+        scenarioDAO.updateById(scenario.id, Document("$inc" -> Document("times" -> -1.bson)))
       )
       _ <- ZIO.when(scenario.callback.isDefined)(recurseCallback(state, scenario.callback.get, data, xdata))
     } yield ()
@@ -145,7 +145,7 @@ final class ScenarioEngine(
                   case JsonCallbackRequest(_, _, _, body) =>
                     r.body(body.substitute(data).map(_.substitute(xdata)).use(_.noSpaces))
                   case XMLCallbackRequest(_, _, _, body) =>
-                    r.body(body.toNode.substitute(data).map(_.substitute(xdata)).use(_.mkString))
+                    r.body(body.unwrap.substitute(data).map(_.substitute(xdata)).use(_.mkString))
                   case _ => r
                 }
               )
@@ -182,7 +182,7 @@ final class ScenarioEngine(
               case JsonOutput(payload, _, isT) =>
                 if (isT) payload.substitute(data).map(_.substitute(xdata)).use(_.noSpaces) else payload.noSpaces
               case XmlOutput(payload, _, isT) =>
-                if (isT) payload.toNode.substitute(data).map(_.substitute(xdata)).use(_.mkString) else payload.asString
+                if (isT) payload.unwrap.substitute(data).map(_.substitute(xdata)).use(_.mkString) else payload.asString
             }
           )
         } { drb =>
@@ -192,7 +192,7 @@ final class ScenarioEngine(
               if (isT) payload.substitute(data).map(_.substitute(xdata)).useAsIs else payload
             case XmlOutput(payload, _, isT) =>
               if (isT)
-                Json.fromString(payload.toNode.substitute(data).map(_.substitute(xdata)).use(_.mkString))
+                Json.fromString(payload.unwrap.substitute(data).map(_.substitute(xdata)).use(_.mkString))
               else Json.fromString(payload.asString)
           }
 
@@ -210,7 +210,7 @@ final class ScenarioEngine(
           )
         }
       )
-      .headersReplacing(dest.request.headers.view.mapValues(_.asString).toMap)
+      .headersReplacing(dest.request.headers.view.mapValues(_.unwrap).toMap)
       .method(Method(dest.request.method.entryName), uri"${dest.request.url}")
       .response(asString)
       .send(httpBackend)

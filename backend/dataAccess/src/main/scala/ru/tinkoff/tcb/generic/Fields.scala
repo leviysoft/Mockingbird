@@ -14,7 +14,7 @@ trait Fields[T] extends Serializable {
   def fields: List[String]
   override def toString: String = fields.mkString(", ")
 }
-object Fields {
+object Fields extends AutoDerivation[Fields] {
   @inline def apply[T](implicit instance: Fields[T]): Fields[T] = instance
 
   def mk[T](fs: List[String]): Fields[T] = new Fields[T] {
@@ -34,9 +34,7 @@ object Fields {
   implicit def enumEntry[T <: EnumEntry]: Fields[T]              = mk(Nil)
   implicit def strEnum[T <: StringEnumEntry]: Fields[T]          = mk(Nil)
 
-  type Typeclass[T] = Fields[T]
-
-  def join[T](caseClass: CaseClass[Typeclass, T]): Typeclass[T] =
+  def join[T](caseClass: CaseClass[Fields, T]): Fields[T] =
     mk(
       caseClass.parameters
         .foldLeft(List.newBuilder[String])((acc, fld) =>
@@ -46,7 +44,5 @@ object Fields {
         .result()
     )
 
-  def split[T](sealedTrait: SealedTrait[Typeclass, T]): Typeclass[T] = mk(Nil)
-
-  implicit def genFields[T]: Typeclass[T] = macro Magnolia.gen[T]
+  def split[T](sealedTrait: SealedTrait[Fields, T]): Fields[T] = mk(Nil)
 }

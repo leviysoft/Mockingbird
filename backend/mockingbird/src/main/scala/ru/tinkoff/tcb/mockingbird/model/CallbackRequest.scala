@@ -3,33 +3,27 @@ package ru.tinkoff.tcb.mockingbird.model
 import scala.xml.Node
 
 import com.github.dwickern.macros.NameOf.nameOfType
-import derevo.circe.decoder
-import derevo.circe.encoder
-import derevo.derive
 import eu.timepit.refined.types.string.NonEmptyString
+import io.circe.Decoder
+import io.circe.Encoder
 import io.circe.Json
+import io.circe.derivation.Configuration as CirceConfig
 import io.circe.refined.*
+import neotype.*
+import oolong.bson.*
+import oolong.bson.annotation.BsonDiscriminator
+import oolong.bson.given
+import oolong.bson.refined.given
+import sttp.tapir.Schema
 import sttp.tapir.codec.refined.*
-import sttp.tapir.derevo.schema
 import sttp.tapir.generic.Configuration as TapirConfig
 
-import ru.tinkoff.tcb.bson.annotation.BsonDiscriminator
-import ru.tinkoff.tcb.bson.derivation.bsonDecoder
-import ru.tinkoff.tcb.bson.derivation.bsonEncoder
 import ru.tinkoff.tcb.circe.bson.*
-import ru.tinkoff.tcb.protocol.bson.*
 import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.xml.XMLString
 
-@derive(
-  bsonDecoder,
-  bsonEncoder,
-  decoder(CallbackRequest.modes, true, Some("mode")),
-  encoder(CallbackRequest.modes, Some("mode")),
-  schema
-)
 @BsonDiscriminator("mode")
-sealed trait CallbackRequest {
+sealed trait CallbackRequest derives BsonDecoder, BsonEncoder {
   def url: NonEmptyString
   def method: HttpMethod
   def headers: Map[String, String]
@@ -43,18 +37,25 @@ object CallbackRequest {
     nameOfType[XMLCallbackRequest]         -> "xml"
   ).withDefault(identity)
 
-  implicit val customConfiguration: TapirConfig =
-    TapirConfig.default.withDiscriminator("mode").copy(toEncodedName = modes)
+  given TapirConfig = TapirConfig.default.withDiscriminator("mode").copy(toEncodedName = modes)
+
+  given CirceConfig = CirceConfig(
+    transformConstructorNames = modes,
+    useDefaults = true,
+    discriminator = Some("mode")
+  )
+
+  given Encoder[CallbackRequest] = Encoder.AsObject.derivedConfigured
+  given Decoder[CallbackRequest] = Decoder.derivedConfigured
+  given Schema[CallbackRequest] = Schema.derived
 }
 
-@derive(decoder, encoder)
 final case class CallbackRequestWithoutBody(
     url: NonEmptyString,
     method: HttpMethod,
     headers: Map[String, String]
 ) extends CallbackRequest
 
-@derive(decoder, encoder)
 final case class RawCallbackRequest(
     url: NonEmptyString,
     method: HttpMethod,
@@ -62,7 +63,6 @@ final case class RawCallbackRequest(
     body: String
 ) extends CallbackRequest
 
-@derive(decoder, encoder)
 final case class JsonCallbackRequest(
     url: NonEmptyString,
     method: HttpMethod,
@@ -70,12 +70,11 @@ final case class JsonCallbackRequest(
     body: Json
 ) extends CallbackRequest
 
-@derive(decoder, encoder)
 final case class XMLCallbackRequest(
     url: NonEmptyString,
     method: HttpMethod,
     headers: Map[String, String],
-    body: XMLString
+    body: XMLString.Type
 ) extends CallbackRequest {
-  lazy val node: Node = body.toNode
+  lazy val node: Node = body.unwrap
 }

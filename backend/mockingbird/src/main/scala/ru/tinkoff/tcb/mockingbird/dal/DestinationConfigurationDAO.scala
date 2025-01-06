@@ -2,7 +2,6 @@ package ru.tinkoff.tcb.mockingbird.dal
 
 import scala.annotation.implicitNotFound
 
-import cats.tagless.autoFunctorK
 import com.github.dwickern.macros.NameOf.*
 import org.mongodb.scala.MongoCollection
 import org.mongodb.scala.bson.BsonDocument
@@ -16,7 +15,6 @@ import ru.tinkoff.tcb.utils.crypto.AES
 import ru.tinkoff.tcb.utils.id.SID
 
 @implicitNotFound("Could not find an instance of DestinationConfigurationDAO for ${F}")
-@autoFunctorK
 trait DestinationConfigurationDAO[F[_]] extends MongoDAO[F, DestinationConfiguration] {
   def getAll: F[Vector[DestinationConfiguration]] = findChunk(BsonDocument(), 0, Int.MaxValue)
   def getAllNames: F[Vector[SID[DestinationConfiguration]]]
@@ -39,8 +37,8 @@ object DestinationConfigurationDAOImpl {
   val live: RLayer[MongoCollection[BsonDocument] & AES, DestinationConfigurationDAO[Task]] =
     ZLayer {
       for {
-        coll                <- ZIO.service[MongoCollection[BsonDocument]]
-        implicit0(aes: AES) <- ZIO.service[AES]
+        coll      <- ZIO.service[MongoCollection[BsonDocument]]
+        given AES <- ZIO.service[AES]
         dcd = new DestinationConfigurationDAOImpl(coll)
         _ <- dcd.createIndexes
       } yield dcd

@@ -13,7 +13,7 @@ import tofu.logging.Logging.Warn
 
 import ru.tinkoff.tcb.mockingbird.api.Tracing
 
-class MDCLogging[R <: Tracing](logger: Logger) extends Logging[URIO[R, *]] {
+class MDCLogging[R <: Tracing](logger: Logger) extends Logging[[X] =>> URIO[R, X]] {
   override def write(level: Logging.Level, message: String, values: LoggedValue*): URIO[Tracing, Unit] =
     level match {
       case Trace =>
@@ -23,7 +23,7 @@ class MDCLogging[R <: Tracing](logger: Logger) extends Logging[URIO[R, *]] {
               tracing <- ZIO.service[Tracing]
               ctx     <- tracing.lc.get
               mdc = Loggable[Mdc].loggedValue(ctx.mdc())
-              _ <- ZIO.succeed(logger.trace(message, values :+ mdc: _*))
+              _ <- ZIO.succeed(logger.trace(message, values :+ mdc*))
             } yield ()
           }
           .unit
@@ -34,7 +34,7 @@ class MDCLogging[R <: Tracing](logger: Logger) extends Logging[URIO[R, *]] {
               tracing <- ZIO.service[Tracing]
               ctx     <- tracing.lc.get
               mdc = Loggable[Mdc].loggedValue(ctx.mdc())
-              _ <- ZIO.succeed(logger.debug(message, values :+ mdc: _*))
+              _ <- ZIO.succeed(logger.debug(message, values :+ mdc*))
             } yield ()
           }
           .unit
@@ -45,7 +45,7 @@ class MDCLogging[R <: Tracing](logger: Logger) extends Logging[URIO[R, *]] {
               tracing <- ZIO.service[Tracing]
               ctx     <- tracing.lc.get
               mdc = Loggable[Mdc].loggedValue(ctx.mdc())
-              _ <- ZIO.succeed(logger.info(message, values :+ mdc: _*))
+              _ <- ZIO.succeed(logger.info(message, values :+ mdc*))
             } yield ()
           }
           .unit
@@ -56,7 +56,7 @@ class MDCLogging[R <: Tracing](logger: Logger) extends Logging[URIO[R, *]] {
               tracing <- ZIO.service[Tracing]
               ctx     <- tracing.lc.get
               mdc = Loggable[Mdc].loggedValue(ctx.mdc())
-              _ <- ZIO.succeed(logger.warn(message, values :+ mdc: _*))
+              _ <- ZIO.succeed(logger.warn(message, values :+ mdc*))
             } yield ()
           }
           .unit
@@ -67,7 +67,7 @@ class MDCLogging[R <: Tracing](logger: Logger) extends Logging[URIO[R, *]] {
               tracing <- ZIO.service[Tracing]
               ctx     <- tracing.lc.get
               mdc = Loggable[Mdc].loggedValue(ctx.mdc())
-              _ <- ZIO.succeed(logger.error(message, values :+ mdc: _*))
+              _ <- ZIO.succeed(logger.error(message, values :+ mdc*))
             } yield ()
           }
           .unit

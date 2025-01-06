@@ -1,5 +1,6 @@
 package ru.tinkoff.tcb.bson.enumeratum.values
 
+import oolong.bson.given
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 

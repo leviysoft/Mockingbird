@@ -31,9 +31,9 @@ import ru.tinkoff.tcb.mockingbird.model.XmlResponse
 import ru.tinkoff.tcb.mockingbird.wldRuntime
 
 final class PublicHttp(handler: PublicApiHandler) {
-  private val withString = endpointsWithString.map(_.zServerLogic[WLD]((handle _).tupled))
+  private val withString = endpointsWithString.map(_.zServerLogic[WLD](handle.tupled))
   private val withMultipart =
-    endpointsWithMultipart.map(_.zServerLogic[WLD]((handle _).tupled))
+    endpointsWithMultipart.map(_.zServerLogic[WLD](handle.tupled))
 
   private val swaggerEndpoints =
     SwaggerInterpreter(
@@ -44,7 +44,7 @@ final class PublicHttp(handler: PublicApiHandler) {
         useRelativePaths = false,
         showExtensions = false
       )
-    ).fromEndpoints[RIO[WLD, *]](
+    ).fromEndpoints[[X] =>> RIO[WLD, X]](
       endpointsWithString ++ endpointsWithMultipart,
       "Mockingbird",
       BuildInfo.version
@@ -64,7 +64,7 @@ final class PublicHttp(handler: PublicApiHandler) {
         )
       )
       .addInterceptor(
-        RequestInterceptor.transformResult(new RequestInterceptor.RequestResultTransform[RIO[Tracing, *]] {
+        RequestInterceptor.transformResult(new RequestInterceptor.RequestResultTransform[[X] =>> RIO[Tracing, X]] {
           override def apply[B](request: ServerRequest, result: RequestResult[B]): RIO[Tracing, RequestResult[B]] =
             for {
               tracing <- ZIO.service[Tracing]

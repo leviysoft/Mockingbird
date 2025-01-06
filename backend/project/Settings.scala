@@ -28,7 +28,7 @@ object Settings {
 
   val common = Seq(
     organization := "ru.tinkoff",
-    scalaVersion := "2.13.15",
+    scalaVersion := "3.5.2",
     Compile / packageDoc / publishArtifact := false,
     Compile / packageSrc / publishArtifact := false,
     Compile / doc / sources := Seq.empty,
@@ -36,40 +36,26 @@ object Settings {
       "-encoding",
       "utf8",
       "-deprecation",
+      "-explain-cyclic",
       "-explaintypes",
       "-feature",
       "-language:higherKinds",
       "-language:implicitConversions",
       "-release:11",
       "-unchecked",
+      "-Xmax-inlines", "64",
       "-Ybackend-parallelism",
       java.lang.Runtime.getRuntime.availableProcessors().toString,
-      "-Ycache-plugin-class-loader:last-modified",
-      "-Ycache-macro-class-loader:last-modified",
+      "-Yretain-trees", //for accessing default values by magnolia
       prelude(), // standart imports + zio
-      "-Ymacro-annotations",
-      "-Xsource:3",
-      "-Vimplicits",
-      "-Vtype-diffs",
       // warning settings
-      "-Wconf:any:wv", // shows warning categories for nowarn (https://www.scala-lang.org/2021/01/12/configuring-and-suppressing-warnings.html)
+      //"-Wconf:any:wv", // shows warning categories for nowarn (https://www.scala-lang.org/2021/01/12/configuring-and-suppressing-warnings.html)
       "-Wunused:imports",
       "-Wunused:privates",
-      "-Wunused:synthetics",
-      "-Xlint:_",
-      "-Xlint:-byname-implicit",       // disabled due to scala bug https://github.com/scala/bug/issues/12072
-      "-Xlint:-unused",                // partially enabled via Wunused otherwise is false-positive in macros
-      "-Xlint:-missing-interpolator",  // false-positive on mongo request
-      "-Xlint:-type-parameter-shadow", // too many occurrences
-      "-Ywarn-unused:imports",
-      "-Ywarn-value-discard",
-      "-Ywarn-dead-code",
-      "-Ywarn-macros:after"
+      "-Wvalue-discard"
     ),
-    addCompilerPlugin("com.olegpy"    %% "better-monadic-for" % "0.3.1"),
-    addCompilerPlugin("org.typelevel" %% "kind-projector"     % "0.13.3" cross CrossVersion.full),
     wartremoverDependencies ~= (_.filterNot(_.name == "wartremover-contrib")),
-    wartremoverDependencies += "org.wartremover" % "wartremover-contrib_2.13" % ContribWart.ContribVersion,
+    wartremoverDependencies += "org.wartremover" % "wartremover-contrib_3" % ContribWart.ContribVersion,
     wartremoverErrors ++= Seq(
       Wart.ExplicitImplicitTypes,
       Wart.FinalCaseClass,

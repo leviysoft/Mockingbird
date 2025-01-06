@@ -2,22 +2,22 @@ package ru.tinkoff.tcb.mockingbird.model
 
 import scala.util.Try
 import scala.xml.Node
-import scala.xml.NodeSeq
 
 import com.github.dwickern.macros.NameOf.*
-import derevo.circe.decoder
-import derevo.circe.encoder
-import derevo.derive
+import io.circe.Decoder
+import io.circe.Encoder
 import io.circe.Json
 import io.circe.JsonObject
+import io.circe.derivation.Configuration as CirceConfig
 import io.circe.parser.parse
+import neotype.*
+import oolong.bson.*
+import oolong.bson.annotation.BsonDiscriminator
+import oolong.bson.given
 import sttp.model.Part
-import sttp.tapir.derevo.schema
+import sttp.tapir.Schema
 import sttp.tapir.generic.Configuration as TapirConfig
 
-import ru.tinkoff.tcb.bson.annotation.BsonDiscriminator
-import ru.tinkoff.tcb.bson.derivation.bsonDecoder
-import ru.tinkoff.tcb.bson.derivation.bsonEncoder
 import ru.tinkoff.tcb.circe.bson.*
 import ru.tinkoff.tcb.predicatedsl.Keyword
 import ru.tinkoff.tcb.predicatedsl.form.FormPredicate
@@ -33,15 +33,8 @@ import ru.tinkoff.tcb.utils.webform.toJson
 import ru.tinkoff.tcb.utils.xml.SafeXML
 import ru.tinkoff.tcb.utils.xml.XMLString
 
-@derive(
-  bsonDecoder,
-  bsonEncoder,
-  decoder(HttpStubRequest.modes, true, Some("mode")),
-  encoder(HttpStubRequest.modes, Some("mode")),
-  schema
-)
 @BsonDiscriminator("mode")
-sealed trait HttpStubRequest {
+sealed trait HttpStubRequest derives BsonDecoder, BsonEncoder {
   def headers: Map[String, String]
 
   def query: Map[JsonOptic, Map[Keyword.Json, Json]]
@@ -78,11 +71,19 @@ object HttpStubRequest {
     nameOfType[MultipartRequest]   -> "multipart"
   ).withDefault(identity)
 
-  implicit val customConfiguration: TapirConfig =
-    TapirConfig.default.withDiscriminator("mode").copy(toEncodedName = modes)
+  given TapirConfig = TapirConfig.default.withDiscriminator("mode").copy(toEncodedName = modes)
+
+  given CirceConfig = CirceConfig(
+    transformConstructorNames = modes,
+    useDefaults = true,
+    discriminator = Some("mode")
+  )
+
+  given Encoder[HttpStubRequest] = Encoder.AsObject.derivedConfigured
+  given Decoder[HttpStubRequest] = Decoder.derivedConfigured
+  given Schema[HttpStubRequest] = Schema.derived
 }
 
-@derive(decoder, encoder)
 final case class JsonRequest(
     headers: Map[String, String],
     query: Map[JsonOptic, Map[Keyword.Json, Json]] = Map.empty,
@@ -99,16 +100,15 @@ final case class JsonRequest(
   override def runXmlExtractors(body: Node): Json = Json.Null
 }
 
-@derive(decoder, encoder)
 final case class XmlRequest(
     headers: Map[String, String],
     query: Map[JsonOptic, Map[Keyword.Json, Json]] = Map.empty,
-    body: XMLString,
+    body: XMLString.Type,
     extractors: Map[String, XmlExtractor] = Map.empty,
     inlineCData: Boolean = false
 ) extends HttpStubRequest {
   override def checkBody(rBody: RequestBody): Boolean =
-    extractXML(rBody).contains(body.toNode)
+    extractXML(rBody).contains(body.unwrap)
 
   override def extractJson(rBody: RequestBody): Option[Json] = None
 
@@ -125,7 +125,6 @@ final case class XmlRequest(
     extractors.view.mapValues(_(body)).collect { case (key, Some(jv)) => key -> jv } pipe Json.fromFields
 }
 
-@derive(decoder, encoder)
 final case class RawRequest(
     headers: Map[String, String],
     query: Map[JsonOptic, Map[Keyword.Json, Json]] = Map.empty,
@@ -141,7 +140,6 @@ final case class RawRequest(
   override def runXmlExtractors(body: Node): Json = Json.Null
 }
 
-@derive(decoder, encoder)
 final case class JLensRequest(
     headers: Map[String, String],
     query: Map[JsonOptic, Map[Keyword.Json, Json]] = Map.empty,
@@ -158,7 +156,6 @@ final case class JLensRequest(
   override def runXmlExtractors(body: Node): Json = Json.Null
 }
 
-@derive(decoder, encoder)
 final case class XPathRequest(
     headers: Map[String, String],
     query: Map[JsonOptic, Map[Keyword.Json, Json]] = Map.empty,
@@ -184,7 +181,6 @@ final case class XPathRequest(
     extractors.view.mapValues(_(body)).collect { case (key, Some(jv)) => key -> jv } pipe Json.fromFields
 }
 
-@derive(decoder, encoder)
 final case class WebFormRequest(
     headers: Map[String, String],
     query: Map[JsonOptic, Map[Keyword.Json, Json]] = Map.empty,
@@ -204,7 +200,6 @@ final case class WebFormRequest(
   override def runXmlExtractors(body: Node): Json = Json.Null
 }
 
-@derive(decoder, encoder)
 final case class RequestWithoutBody(
     headers: Map[String, String],
     query: Map[JsonOptic, Map[Keyword.Json, Json]] = Map.empty
@@ -220,7 +215,6 @@ final case class RequestWithoutBody(
   override def runXmlExtractors(body: Node): Json = Json.Null
 }
 
-@derive(decoder, encoder)
 final case class RequestWithAnyBody(
     headers: Map[String, String],
     query: Map[JsonOptic, Map[Keyword.Json, Json]] = Map.empty
@@ -235,15 +229,8 @@ final case class RequestWithAnyBody(
   override def runXmlExtractors(body: Node): Json = Json.Null
 }
 
-@derive(
-  bsonDecoder,
-  bsonEncoder,
-  decoder(RequestPart.modes, true, Some("mode")),
-  encoder(RequestPart.modes, Some("mode")),
-  schema
-)
 @BsonDiscriminator("mode")
-sealed trait RequestPart {
+sealed trait RequestPart derives BsonDecoder, BsonEncoder {
   def headers: Map[String, String]
 
   def checkHeaders(hs: Map[String, String]): Boolean =
@@ -274,11 +261,19 @@ object RequestPart {
     nameOfType[XPathPart]      -> "xpath"
   ).withDefault(identity)
 
-  implicit val customConfiguration: TapirConfig =
-    TapirConfig.default.withDiscriminator("mode").copy(toEncodedName = modes)
+  given TapirConfig = TapirConfig.default.withDiscriminator("mode").copy(toEncodedName = modes)
+
+  given CirceConfig = CirceConfig(
+    transformConstructorNames = modes,
+    useDefaults = true,
+    discriminator = Some("mode")
+  )
+
+  given Encoder[RequestPart] = Encoder.AsObject.derivedConfigured
+  given Decoder[RequestPart] = Decoder.derivedConfigured
+  given Schema[RequestPart] = Schema.derived
 }
 
-@derive(decoder, encoder)
 final case class AnyContentPart(headers: Map[String, String]) extends RequestPart {
   override def checkBody(value: String): Boolean = true
 
@@ -287,7 +282,6 @@ final case class AnyContentPart(headers: Map[String, String]) extends RequestPar
   override def extractXML(body: String): Option[Node] = None
 }
 
-@derive(decoder, encoder)
 final case class RawPart(headers: Map[String, String], body: String) extends RequestPart {
   override def checkBody(value: String): Boolean = value == body
 
@@ -296,7 +290,6 @@ final case class RawPart(headers: Map[String, String], body: String) extends Req
   override def extractXML(body: String): Option[Node] = None
 }
 
-@derive(decoder, encoder)
 final case class UrlEncodedPart(headers: Map[String, String], body: FormPredicate) extends RequestPart {
   override def checkBody(value: String): Boolean = body(decodeForm(value))
 
@@ -305,7 +298,6 @@ final case class UrlEncodedPart(headers: Map[String, String], body: FormPredicat
   override def extractXML(body: String): Option[Node] = None
 }
 
-@derive(decoder, encoder)
 final case class JsonPart(headers: Map[String, String], body: Json) extends RequestPart {
   override def checkBody(value: String): Boolean = parse(value).contains(body)
 
@@ -314,16 +306,14 @@ final case class JsonPart(headers: Map[String, String], body: Json) extends Requ
   override def extractXML(body: String): Option[Node] = None
 }
 
-@derive(decoder, encoder)
-final case class XMLPart(headers: Map[String, String], body: XMLString) extends RequestPart {
-  override def checkBody(value: String): Boolean = Try(SafeXML.loadString(value)).exists(_ == body.toNode)
+final case class XMLPart(headers: Map[String, String], body: XMLString.Type) extends RequestPart {
+  override def checkBody(value: String): Boolean = Try(SafeXML.loadString(value)).exists(_ == body.unwrap)
 
   override def extractJson(body: String): Option[Json] = None
 
   override def extractXML(body: String): Option[Node] = Try(SafeXML.loadString(body)).toOption
 }
 
-@derive(decoder, encoder)
 final case class JLensPart(headers: Map[String, String], body: JsonPredicate) extends RequestPart {
   override def checkBody(value: String): Boolean = parse(value).map(body).getOrElse(false)
 
@@ -332,7 +322,6 @@ final case class JLensPart(headers: Map[String, String], body: JsonPredicate) ex
   override def extractXML(body: String): Option[Node] = None
 }
 
-@derive(decoder, encoder)
 final case class XPathPart(headers: Map[String, String], body: XmlPredicate) extends RequestPart {
   override def checkBody(value: String): Boolean = Try(SafeXML.loadString(value)).map(body).getOrElse(false)
 
@@ -341,7 +330,6 @@ final case class XPathPart(headers: Map[String, String], body: XmlPredicate) ext
   override def extractXML(body: String): Option[Node] = Try(SafeXML.loadString(body)).toOption
 }
 
-@derive(decoder, encoder)
 final case class MultipartRequest(
     headers: Map[String, String],
     query: Map[JsonOptic, Map[Keyword.Json, Json]] = Map.empty,

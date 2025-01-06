@@ -55,12 +55,12 @@ import ru.tinkoff.tcb.utils.metrics.makeRegistry
 import ru.tinkoff.tcb.utils.resource.readStr
 import ru.tinkoff.tcb.utils.sandboxing.GraalJsSandbox
 
-object Mockingbird extends scala.App {
+object Mockingbird {
   type FL = WLD & ServerConfig & PublicHttp & EventSpawner & ResourceManager & EphemeralCleaner & GrpcRequestHandler
 
-  private val zioLog: Logging[UIO] = new ZUniversalLogging(this.getClass.getName)
+  private def zioLog: Logging[UIO] = new ZUniversalLogging(this.getClass.getName)
 
-  private val mongoLayer = ZLayer {
+  private def mongoLayer = ZLayer {
     for {
       config <- ZIO.service[MongoConfig]
     } yield MongoClient(config.uri).getDatabase(new ConnectionString(config.uri).getDatabase)
@@ -94,7 +94,7 @@ object Mockingbird extends scala.App {
       .use(_ => ZIO.never)
       .exitCode
 
-  private val server = ZLayer.fromZIO {
+  private def server = ZLayer.fromZIO {
     program
       .provide(
         Tracing.live,
@@ -179,9 +179,9 @@ object Mockingbird extends scala.App {
 
   def port: Int = 9000
 
-  val builder: ServerBuilder[?] = ServerBuilder.forPort(port)
+  def builder: ServerBuilder[?] = ServerBuilder.forPort(port)
 
-  private val grpcHandlerLayer = ZLayer.make[WLD & GrpcRequestHandler](
+  private def grpcHandlerLayer = ZLayer.make[WLD & GrpcRequestHandler](
     Tracing.live,
     MockingbirdConfiguration.server,
     MockingbirdConfiguration.mongo,
@@ -190,20 +190,20 @@ object Mockingbird extends scala.App {
     collection(_.state) >>> PersistentStateDAOImpl.live,
     collection(_.grpcStub) >>> GrpcStubDAOImpl.live,
     collection(_.grpcMethodDescription) >>> GrpcMethodDescriptionDAOImpl.live,
-    (ZLayer.service[ServerConfig].project(_.sandbox) ++ ZLayer
+    (ZLayer.service[ServerConfig].project(_.sandbox) +!+ ZLayer
       .fromZIO(ZIO.attempt(readStr("prelude.js")).map(Option(_)))) >>> GraalJsSandbox.live,
     GrpcStubResolverImpl.live,
     GrpcRequestHandlerImpl.live
   )
 
-  val runGRPCServer: UIO[Unit] = for {
+  def runGRPCServer: UIO[Unit] = for {
     runtime <- zio.ZIO.runtime[Any]
     handler = ZServerCallHandler.bidiCallHandler(
       runtime,
       (stream: Stream[StatusException, Array[Byte]], requestContext) =>
         GrpcRequestHandler
           .exec(stream)
-          .provideLayer(ZLayer.succeed(requestContext) ++ grpcHandlerLayer)
+          .provideLayer(ZLayer.succeed(requestContext) +!+ grpcHandlerLayer)
           .mapError((e: Throwable) => new StatusException(Status.INTERNAL.withDescription(e.getMessage)))
     )
     mutableRegistry = UniversalHandlerRegistry(
@@ -213,14 +213,15 @@ object Mockingbird extends scala.App {
     _ = builder.build().start()
   } yield ()
 
-  Unsafe.unsafe { implicit us =>
-    wldRuntime.unsafe.run {
-      (runGRPCServer *> zioLog.info(s"GRPC server started at port: $port") *> ZIO.scoped[Any](
-        server.build *> ZIO.never
-      ))
-        .catchAll(ex => zioLog.errorCause(ex.getMessage, ex))
-        .catchAllDefect(ex => zioLog.errorCause(ex.getMessage, ex))
-        .exitCode
+  def main(args: Array[String]): Unit =
+    Unsafe.unsafe { implicit us =>
+      wldRuntime.unsafe.run {
+        (runGRPCServer *> zioLog.info(s"GRPC server started at port: $port") *> ZIO.scoped[Any](
+          server.build *> ZIO.never
+        ))
+          .catchAll(ex => zioLog.errorCause(ex.getMessage, ex))
+          .catchAllDefect(ex => zioLog.errorCause(ex.getMessage, ex))
+          .exitCode
+      }
     }
-  }
 }

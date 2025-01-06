@@ -2,15 +2,15 @@ package ru.tinkoff.tcb.mockingbird.dal
 
 import scala.annotation.implicitNotFound
 
-import cats.tagless.autoFunctorK
 import com.github.dwickern.macros.NameOf.nameOf
+import oolong.bson.given
+import oolong.dsl.*
+import oolong.mongo.*
 import org.mongodb.scala.MongoCollection
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes.ascending
 
-import ru.tinkoff.tcb.criteria.*
-import ru.tinkoff.tcb.criteria.Typed.*
 import ru.tinkoff.tcb.dataaccess.UpdateResult
 import ru.tinkoff.tcb.mockingbird.model.Label
 import ru.tinkoff.tcb.mongo.DAOBase
@@ -18,7 +18,6 @@ import ru.tinkoff.tcb.mongo.MongoDAO
 import ru.tinkoff.tcb.utils.id.SID
 
 @implicitNotFound("Could not find an instance of LabelDAO for ${F}")
-@autoFunctorK
 trait LabelDAO[F[_]] extends MongoDAO[F, Label] {
   def ensureLabels(service: String, labels: Vector[String]): F[UpdateResult]
 }
@@ -39,7 +38,7 @@ class LabelDAOImpl(collection: MongoCollection[BsonDocument]) extends DAOBase[La
     else {
       for {
         existing <- findChunk(
-          prop[Label](_.serviceSuffix) === service && prop[Label](_.label).in(labels),
+          query[Label](l => l.serviceSuffix == lift(service) && lift(labels).contains(l.label)),
           0,
           labels.size
         )

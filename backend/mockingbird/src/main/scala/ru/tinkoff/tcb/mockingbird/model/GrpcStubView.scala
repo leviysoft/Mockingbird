@@ -2,16 +2,11 @@ package ru.tinkoff.tcb.mockingbird.model
 
 import java.time.Instant
 
-import derevo.circe.decoder
-import derevo.circe.encoder
-import derevo.derive
-import eu.timepit.refined.types.numeric.NonNegInt
-import eu.timepit.refined.types.string.NonEmptyString
+import io.circe.Decoder
+import io.circe.Encoder
 import io.circe.Json
-import io.circe.refined.*
-import io.scalaland.chimney.dsl.TransformationOps
-import sttp.tapir.codec.refined.*
-import sttp.tapir.derevo.schema
+import io.scalaland.chimney.dsl.*
+import sttp.tapir.Schema
 
 import ru.tinkoff.tcb.predicatedsl.Keyword
 import ru.tinkoff.tcb.predicatedsl.json.JsonPredicate
@@ -20,15 +15,14 @@ import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.circe.optics.JsonOptic
 import ru.tinkoff.tcb.utils.id.SID
 
-@derive(encoder, decoder, schema)
 final case class GrpcStubView(
     id: SID[GrpcStub],
     scope: Scope,
     created: Instant,
-    service: NonEmptyString,
-    times: Option[NonNegInt],
+    service: String,
+    times: Option[Int],
     methodName: String,
-    name: NonEmptyString,
+    name: String,
     requestSchema: GrpcProtoDefinition,
     requestClass: String,
     responseSchema: GrpcProtoDefinition,
@@ -39,7 +33,9 @@ final case class GrpcStubView(
     requestPredicates: JsonPredicate,
     persist: Option[Map[JsonOptic, Json]],
     labels: Seq[String]
-)
+) derives Decoder,
+      Encoder,
+      Schema
 
 object GrpcStubView {
   def makeFrom(stub: GrpcStub, description: GrpcMethodDescription): GrpcStubView =

@@ -3,32 +3,24 @@ package ru.tinkoff.tcb.mockingbird.model
 import scala.xml.NodeSeq
 
 import com.github.dwickern.macros.NameOf.*
-import derevo.circe.decoder
-import derevo.circe.encoder
-import derevo.derive
+import io.circe.Decoder
+import io.circe.Encoder
 import io.circe.Json
+import io.circe.derivation.Configuration as CirceConfig
 import io.circe.parser.parse
-import sttp.tapir.derevo.schema
+import oolong.bson.*
+import oolong.bson.annotation.BsonDiscriminator
+import sttp.tapir.Schema
 import sttp.tapir.generic.Configuration as TapirConfig
 
-import ru.tinkoff.tcb.bson.annotation.BsonDiscriminator
-import ru.tinkoff.tcb.bson.derivation.bsonDecoder
-import ru.tinkoff.tcb.bson.derivation.bsonEncoder
 import ru.tinkoff.tcb.protocol.bson.*
 import ru.tinkoff.tcb.protocol.json.*
 import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.circe.optics.JsonOptic
 import ru.tinkoff.tcb.xpath.SXpath
 
-@derive(
-  bsonDecoder,
-  bsonEncoder,
-  decoder(XmlExtractor.types, true, Some("type")),
-  encoder(XmlExtractor.types, Some("type")),
-  schema
-)
 @BsonDiscriminator("type")
-sealed trait XmlExtractor {
+sealed trait XmlExtractor derives BsonDecoder, BsonEncoder {
   def apply(node: NodeSeq): Option[Json]
 }
 object XmlExtractor {
@@ -36,8 +28,17 @@ object XmlExtractor {
     nameOfType[JsonCDataExtractor] -> "jcdata",
   ).withDefault(identity)
 
-  implicit val customConfiguration: TapirConfig =
-    TapirConfig.default.withDiscriminator("type").copy(toEncodedName = types)
+  given TapirConfig = TapirConfig.default.withDiscriminator("type").copy(toEncodedName = types)
+
+  given CirceConfig = CirceConfig(
+    transformConstructorNames = types,
+    useDefaults = true,
+    discriminator = Some("type")
+  )
+
+  given Encoder[XmlExtractor] = Encoder.AsObject.derivedConfigured
+  given Decoder[XmlExtractor] = Decoder.derivedConfigured
+  given Schema[XmlExtractor] = Schema.derived
 }
 
 /**
@@ -46,7 +47,6 @@ object XmlExtractor {
  * @param path
  *   Path inside CDATA
  */
-@derive(decoder, encoder)
 final case class JsonCDataExtractor(prefix: SXpath, path: JsonOptic) extends XmlExtractor {
   def apply(node: NodeSeq): Option[Json] =
     prefix.toZoom
