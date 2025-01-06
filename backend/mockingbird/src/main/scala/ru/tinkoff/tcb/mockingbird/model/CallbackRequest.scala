@@ -8,8 +8,6 @@ import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.Json
 import io.circe.derivation.Configuration as CirceConfig
-import io.circe.derivation.ConfiguredDecoder
-import io.circe.derivation.ConfiguredEncoder
 import io.circe.refined.*
 import neotype.*
 import oolong.bson.*
@@ -21,12 +19,11 @@ import sttp.tapir.codec.refined.*
 import sttp.tapir.generic.Configuration as TapirConfig
 
 import ru.tinkoff.tcb.circe.bson.*
-import ru.tinkoff.tcb.protocol.bson.*
 import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.xml.XMLString
 
 @BsonDiscriminator("mode")
-sealed trait CallbackRequest derives BsonDecoder, BsonEncoder, ConfiguredDecoder, ConfiguredEncoder, Schema {
+sealed trait CallbackRequest derives BsonDecoder, BsonEncoder {
   def url: NonEmptyString
   def method: HttpMethod
   def headers: Map[String, String]
@@ -47,6 +44,10 @@ object CallbackRequest {
     useDefaults = true,
     discriminator = Some("mode")
   )
+
+  given Encoder[CallbackRequest] = Encoder.AsObject.derivedConfigured
+  given Decoder[CallbackRequest] = Decoder.derivedConfigured
+  given Schema[CallbackRequest] = Schema.derived
 }
 
 final case class CallbackRequestWithoutBody(

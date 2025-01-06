@@ -29,7 +29,6 @@ import ru.tinkoff.tcb.mockingbird.model.BinaryResponse
 import ru.tinkoff.tcb.mockingbird.model.ByteArray
 import ru.tinkoff.tcb.mockingbird.model.HttpMethod
 import ru.tinkoff.tcb.mockingbird.model.HttpStatusCodeRange
-import ru.tinkoff.tcb.mockingbird.model.HttpStub
 import ru.tinkoff.tcb.mockingbird.model.HttpStubResponse
 import ru.tinkoff.tcb.mockingbird.model.JsonProxyResponse
 import ru.tinkoff.tcb.mockingbird.model.MultipartRequestBody

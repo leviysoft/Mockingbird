@@ -35,7 +35,6 @@ import ru.tinkoff.tcb.mockingbird.model.JsonOutput
 import ru.tinkoff.tcb.mockingbird.model.MessageCallback
 import ru.tinkoff.tcb.mockingbird.model.PersistentState
 import ru.tinkoff.tcb.mockingbird.model.RawOutput
-import ru.tinkoff.tcb.mockingbird.model.Scenario
 import ru.tinkoff.tcb.mockingbird.model.ScenarioOutput
 import ru.tinkoff.tcb.mockingbird.model.Scope
 import ru.tinkoff.tcb.mockingbird.model.SourceConfiguration

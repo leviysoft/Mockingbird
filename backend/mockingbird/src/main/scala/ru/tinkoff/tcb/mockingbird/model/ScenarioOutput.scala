@@ -7,8 +7,6 @@ import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.Json
 import io.circe.derivation.Configuration as CirceConfig
-import io.circe.derivation.ConfiguredDecoder
-import io.circe.derivation.ConfiguredEncoder
 import neotype.*
 import oolong.bson.*
 import oolong.bson.annotation.BsonDiscriminator
@@ -24,7 +22,7 @@ import ru.tinkoff.tcb.utils.transformation.xml.XmlTransformation
 import ru.tinkoff.tcb.utils.xml.XMLString
 
 @BsonDiscriminator("mode")
-sealed trait ScenarioOutput derives BsonDecoder, BsonEncoder, ConfiguredDecoder, ConfiguredEncoder, Schema {
+sealed trait ScenarioOutput derives BsonDecoder, BsonEncoder {
   def delay: Option[FiniteDuration]
   def isTemplate: Boolean
 }
@@ -43,6 +41,10 @@ object ScenarioOutput {
     useDefaults = true,
     discriminator = Some("mode")
   )
+
+  given Encoder[ScenarioOutput] = Encoder.AsObject.derivedConfigured
+  given Decoder[ScenarioOutput] = Decoder.derivedConfigured
+  given Schema[ScenarioOutput] = Schema.derived
 }
 
 final case class RawOutput(

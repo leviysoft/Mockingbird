@@ -12,8 +12,6 @@ import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.Json
 import io.circe.derivation.Configuration as CirceConfig
-import io.circe.derivation.ConfiguredDecoder
-import io.circe.derivation.ConfiguredEncoder
 import io.circe.refined.*
 import oolong.bson.*
 import oolong.bson.annotation.BsonDiscriminator
@@ -30,7 +28,7 @@ import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.circe.optics.JsonOptic
 
 @BsonDiscriminator("mode")
-sealed trait GrpcStubResponse derives BsonDecoder, BsonEncoder, ConfiguredDecoder, ConfiguredEncoder, Schema {
+sealed trait GrpcStubResponse derives BsonDecoder, BsonEncoder {
   def delay: Option[FiniteDuration]
 }
 
@@ -50,6 +48,10 @@ object GrpcStubResponse {
     useDefaults = true,
     discriminator = Some("mode")
   )
+
+  given Encoder[GrpcStubResponse] = Encoder.AsObject.derivedConfigured
+  given Decoder[GrpcStubResponse] = Decoder.derivedConfigured
+  given Schema[GrpcStubResponse] = Schema.derived
 }
 
 final case class FillResponse(

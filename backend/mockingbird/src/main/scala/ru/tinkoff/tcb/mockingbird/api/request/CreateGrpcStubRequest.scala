@@ -1,7 +1,6 @@
 package ru.tinkoff.tcb.mockingbird.api.request
 
 import eu.timepit.refined.*
-import eu.timepit.refined.auto.*
 import eu.timepit.refined.numeric.*
 import eu.timepit.refined.types.numeric.*
 import eu.timepit.refined.types.string.NonEmptyString
@@ -18,7 +17,6 @@ import ru.tinkoff.tcb.mockingbird.model.GrpcStubResponse
 import ru.tinkoff.tcb.mockingbird.model.Scope
 import ru.tinkoff.tcb.predicatedsl.Keyword
 import ru.tinkoff.tcb.predicatedsl.json.JsonPredicate
-import ru.tinkoff.tcb.protocol.json.*
 import ru.tinkoff.tcb.protocol.json.given
 import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.circe.optics.JsonOptic

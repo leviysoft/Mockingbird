@@ -2,8 +2,6 @@ package ru.tinkoff.tcb.mockingbird.scenario
 
 import scala.xml.Node
 
-import eu.timepit.refined.*
-import eu.timepit.refined.numeric.*
 import io.circe.Json
 import mouse.option.*
 import oolong.bson.*

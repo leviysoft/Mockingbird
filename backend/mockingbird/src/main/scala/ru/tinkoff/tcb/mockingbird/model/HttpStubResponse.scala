@@ -13,8 +13,6 @@ import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.Json
 import io.circe.derivation.Configuration as CirceConfig
-import io.circe.derivation.ConfiguredDecoder
-import io.circe.derivation.ConfiguredEncoder
 import io.circe.refined.*
 import neotype.*
 import oolong.bson.*
@@ -36,7 +34,7 @@ import ru.tinkoff.tcb.utils.xml.XMLString
 import ru.tinkoff.tcb.xpath.SXpath
 
 @BsonDiscriminator("mode")
-sealed trait HttpStubResponse derives BsonDecoder, BsonEncoder, ConfiguredDecoder, ConfiguredEncoder, Schema {
+sealed trait HttpStubResponse derives BsonDecoder, BsonEncoder {
   def delay: Option[FiniteDuration]
   def isTemplate: Boolean
 }
@@ -60,6 +58,10 @@ object HttpStubResponse {
     useDefaults = true,
     discriminator = Some("mode")
   )
+
+  given Encoder[HttpStubResponse] = Encoder.AsObject.derivedConfigured
+  given Decoder[HttpStubResponse] = Decoder.derivedConfigured
+  given Schema[HttpStubResponse] = Schema.derived
 
   val headers: Property[HttpStubResponse, Map[String, String]] =
     Vector(

@@ -22,7 +22,6 @@ import ru.tinkoff.tcb.mockingbird.model.HttpStubRequest
 import ru.tinkoff.tcb.mockingbird.model.HttpStubResponse
 import ru.tinkoff.tcb.mockingbird.model.Scope
 import ru.tinkoff.tcb.predicatedsl.Keyword
-import ru.tinkoff.tcb.protocol.json.*
 import ru.tinkoff.tcb.protocol.json.given
 import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.circe.optics.JsonOptic

@@ -9,8 +9,6 @@ import io.circe.Encoder
 import io.circe.Json
 import io.circe.JsonObject
 import io.circe.derivation.Configuration as CirceConfig
-import io.circe.derivation.ConfiguredDecoder
-import io.circe.derivation.ConfiguredEncoder
 import io.circe.parser.parse
 import neotype.*
 import oolong.bson.*
@@ -36,7 +34,7 @@ import ru.tinkoff.tcb.utils.xml.SafeXML
 import ru.tinkoff.tcb.utils.xml.XMLString
 
 @BsonDiscriminator("mode")
-sealed trait HttpStubRequest derives BsonDecoder, BsonEncoder, ConfiguredDecoder, ConfiguredEncoder, Schema {
+sealed trait HttpStubRequest derives BsonDecoder, BsonEncoder {
   def headers: Map[String, String]
 
   def query: Map[JsonOptic, Map[Keyword.Json, Json]]
@@ -80,6 +78,10 @@ object HttpStubRequest {
     useDefaults = true,
     discriminator = Some("mode")
   )
+
+  given Encoder[HttpStubRequest] = Encoder.AsObject.derivedConfigured
+  given Decoder[HttpStubRequest] = Decoder.derivedConfigured
+  given Schema[HttpStubRequest] = Schema.derived
 }
 
 final case class JsonRequest(
@@ -228,7 +230,7 @@ final case class RequestWithAnyBody(
 }
 
 @BsonDiscriminator("mode")
-sealed trait RequestPart derives BsonDecoder, BsonEncoder, ConfiguredDecoder, ConfiguredEncoder, Schema {
+sealed trait RequestPart derives BsonDecoder, BsonEncoder {
   def headers: Map[String, String]
 
   def checkHeaders(hs: Map[String, String]): Boolean =
@@ -266,6 +268,10 @@ object RequestPart {
     useDefaults = true,
     discriminator = Some("mode")
   )
+
+  given Encoder[RequestPart] = Encoder.AsObject.derivedConfigured
+  given Decoder[RequestPart] = Decoder.derivedConfigured
+  given Schema[RequestPart] = Schema.derived
 }
 
 final case class AnyContentPart(headers: Map[String, String]) extends RequestPart {

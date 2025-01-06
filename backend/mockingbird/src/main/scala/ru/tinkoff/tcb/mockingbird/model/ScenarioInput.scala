@@ -8,8 +8,6 @@ import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.Json
 import io.circe.derivation.Configuration as CirceConfig
-import io.circe.derivation.ConfiguredDecoder
-import io.circe.derivation.ConfiguredEncoder
 import io.circe.parser.parse
 import neotype.*
 import oolong.bson.*
@@ -26,7 +24,7 @@ import ru.tinkoff.tcb.utils.xml.SafeXML
 import ru.tinkoff.tcb.utils.xml.XMLString
 
 @BsonDiscriminator("mode")
-sealed trait ScenarioInput derives BsonDecoder, BsonEncoder, ConfiguredDecoder, ConfiguredEncoder, Schema {
+sealed trait ScenarioInput derives BsonDecoder, BsonEncoder {
   def checkMessage(message: String): Boolean
 
   def extractJson(message: String): Option[Json]
@@ -50,6 +48,10 @@ object ScenarioInput {
     useDefaults = true,
     discriminator = Some("mode")
   )
+
+  given Encoder[ScenarioInput] = Encoder.AsObject.derivedConfigured
+  given Decoder[ScenarioInput] = Decoder.derivedConfigured
+  given Schema[ScenarioInput] = Schema.derived
 }
 
 final case class RawInput(payload: String) extends ScenarioInput {

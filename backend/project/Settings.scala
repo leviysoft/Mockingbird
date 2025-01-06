@@ -42,7 +42,6 @@ object Settings {
       "-language:higherKinds",
       "-language:implicitConversions",
       "-release:11",
-      "-source:3.4",
       "-unchecked",
       "-Xmax-inlines", "64",
       "-Ybackend-parallelism",

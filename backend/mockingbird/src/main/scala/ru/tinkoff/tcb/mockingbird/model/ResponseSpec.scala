@@ -23,7 +23,7 @@ import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.xml.SafeXML
 import ru.tinkoff.tcb.utils.xml.XMLString
 
-sealed trait ResponseSpec derives BsonDecoder, BsonEncoder, ConfiguredDecoder, ConfiguredEncoder, Schema {
+sealed trait ResponseSpec derives BsonDecoder, BsonEncoder {
   val code: Option[Int]
   def checkBody(data: String): Boolean
 }
@@ -44,6 +44,10 @@ object ResponseSpec {
     useDefaults = true,
     discriminator = Some("mode")
   )
+
+  given Encoder[ResponseSpec] = Encoder.AsObject.derivedConfigured
+  given Decoder[ResponseSpec] = Decoder.derivedConfigured
+  given Schema[ResponseSpec] = Schema.derived
 }
 
 final case class RawResponseSpec(code: Option[Int], body: Option[String]) extends ResponseSpec {

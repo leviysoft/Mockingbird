@@ -7,8 +7,6 @@ import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.Json
 import io.circe.derivation.Configuration as CirceConfig
-import io.circe.derivation.ConfiguredDecoder
-import io.circe.derivation.ConfiguredEncoder
 import io.circe.parser.parse
 import oolong.bson.*
 import oolong.bson.annotation.BsonDiscriminator
@@ -22,7 +20,7 @@ import ru.tinkoff.tcb.utils.circe.optics.JsonOptic
 import ru.tinkoff.tcb.xpath.SXpath
 
 @BsonDiscriminator("type")
-sealed trait XmlExtractor derives BsonDecoder, BsonEncoder, ConfiguredDecoder, ConfiguredEncoder, Schema {
+sealed trait XmlExtractor derives BsonDecoder, BsonEncoder {
   def apply(node: NodeSeq): Option[Json]
 }
 object XmlExtractor {
@@ -37,6 +35,10 @@ object XmlExtractor {
     useDefaults = true,
     discriminator = Some("type")
   )
+
+  given Encoder[XmlExtractor] = Encoder.AsObject.derivedConfigured
+  given Decoder[XmlExtractor] = Decoder.derivedConfigured
+  given Schema[XmlExtractor] = Schema.derived
 }
 
 /**

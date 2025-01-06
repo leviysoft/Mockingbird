@@ -15,7 +15,6 @@ import ru.tinkoff.tcb.generic.RootOptionFields
 import ru.tinkoff.tcb.predicatedsl.Keyword
 import ru.tinkoff.tcb.predicatedsl.PredicateConstructionError
 import ru.tinkoff.tcb.predicatedsl.json.JsonPredicate
-import ru.tinkoff.tcb.protocol.bson.*
 import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.circe.optics.JLens
 import ru.tinkoff.tcb.utils.webform.toJson
