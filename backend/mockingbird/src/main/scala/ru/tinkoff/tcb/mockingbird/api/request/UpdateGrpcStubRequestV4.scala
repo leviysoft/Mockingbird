@@ -4,9 +4,9 @@ import eu.timepit.refined.numeric.*
 import eu.timepit.refined.refineV
 import eu.timepit.refined.types.numeric.*
 import eu.timepit.refined.types.string.NonEmptyString
-import io.circe.Decoder
-import io.circe.Encoder
 import io.circe.Json
+import io.circe.derivation.ConfiguredDecoder
+import io.circe.derivation.ConfiguredEncoder
 import io.circe.refined.*
 import oolong.bson.*
 import oolong.bson.given
@@ -27,6 +27,7 @@ import ru.tinkoff.tcb.predicatedsl.Keyword
 import ru.tinkoff.tcb.predicatedsl.json.JsonPredicate
 import ru.tinkoff.tcb.protocol.bson.*
 import ru.tinkoff.tcb.protocol.json.*
+import ru.tinkoff.tcb.protocol.json.given
 import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.circe.optics.JsonOptic
 import ru.tinkoff.tcb.utils.id.SID
@@ -52,8 +53,8 @@ final case class UpdateGrpcStubRequestV4(
     persist: Option[Map[JsonOptic, Json]],
     @description("Tags")
     labels: Seq[String] = Seq.empty
-) derives Decoder,
-      Encoder,
+) derives ConfiguredDecoder,
+      ConfiguredEncoder,
       Schema
 object UpdateGrpcGrpcStubRequestV4 {
   implicitly[PropSubset[GrpcStubPatch, GrpcStub]]

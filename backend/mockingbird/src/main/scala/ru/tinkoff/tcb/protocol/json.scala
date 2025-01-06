@@ -10,6 +10,7 @@ import io.circe.Encoder
 import io.circe.Json
 import io.circe.KeyDecoder
 import io.circe.KeyEncoder
+import io.circe.derivation.Configuration as CirceConfig
 
 import ru.tinkoff.tcb.bson.optics.BsonOptic
 import ru.tinkoff.tcb.utils.circe.optics.JLens
@@ -17,6 +18,8 @@ import ru.tinkoff.tcb.utils.circe.optics.JsonOptic
 import ru.tinkoff.tcb.utils.string.*
 
 object json {
+  given CirceConfig = CirceConfig(useDefaults = true)
+
   implicit val bsonOpticEncoder: Encoder[BsonOptic] = (op: BsonOptic) => Json.fromString(op.path)
   implicit val bsonOpticDecoder: Decoder[BsonOptic] = Decoder.decodeString.map {
     BsonOptic.fromPathString
