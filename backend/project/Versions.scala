@@ -7,4 +7,5 @@ object Versions {
   val glass            = "0.3.0"
   val sttp             = "4.0.0-M13"
   val zio              = "2.0.19"
+  val circe            = "0.14.10"
 }

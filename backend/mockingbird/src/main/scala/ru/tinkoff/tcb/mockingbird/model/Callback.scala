@@ -33,14 +33,18 @@ object Callback {
 
   given TapirConfig = TapirConfig.default.withDiscriminator("mode").copy(toEncodedName = modes)
 
-  given CirceConfig = CirceConfig(transformConstructorNames = modes).withDiscriminator("mode")
+  given CirceConfig = CirceConfig(
+    transformConstructorNames = modes,
+    useDefaults = true,
+    discriminator = Some("mode")
+  )
 
   // These instances are defined as implicit defs due to Scala 3 derivation limitations
   implicit def sch: Schema[Callback]     = Schema.derived
   implicit def bd: BsonDecoder[Callback] = BsonDecoder.derived
   implicit def be: BsonEncoder[Callback] = BsonEncoder.derived
-  implicit def enc: Encoder[Callback]    = Encoder.derived
-  implicit def dec: Decoder[Callback]    = Decoder.derived
+  implicit def enc: Encoder[Callback]    = Encoder.AsObject.derivedConfigured
+  implicit def dec: Decoder[Callback]    = Decoder.derivedConfigured
 }
 
 final case class MessageCallback(

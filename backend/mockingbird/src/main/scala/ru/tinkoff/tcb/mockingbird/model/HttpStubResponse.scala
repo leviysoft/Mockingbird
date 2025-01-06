@@ -55,7 +55,11 @@ object HttpStubResponse {
 
   given TapirConfig = TapirConfig.default.withDiscriminator("mode").copy(toEncodedName = modes)
 
-  given CirceConfig = CirceConfig(transformConstructorNames = modes).withDiscriminator("mode")
+  given CirceConfig = CirceConfig(
+    transformConstructorNames = modes,
+    useDefaults = true,
+    discriminator = Some("mode")
+  )
 
   val headers: Property[HttpStubResponse, Map[String, String]] =
     Vector(

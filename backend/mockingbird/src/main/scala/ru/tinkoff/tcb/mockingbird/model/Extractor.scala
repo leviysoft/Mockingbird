@@ -32,7 +32,11 @@ object XmlExtractor {
 
   given TapirConfig = TapirConfig.default.withDiscriminator("type").copy(toEncodedName = types)
 
-  given CirceConfig = CirceConfig(transformConstructorNames = types).withDiscriminator("type")
+  given CirceConfig = CirceConfig(
+    transformConstructorNames = types,
+    useDefaults = true,
+    discriminator = Some("type")
+  )
 }
 
 /**

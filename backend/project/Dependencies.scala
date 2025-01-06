@@ -37,14 +37,12 @@ object Dependencies {
   )
 
   val json = Seq(
-    "io.circe" %% "circe-core"                   % "0.14.6",
-    "io.circe" %% "circe-generic"                % "0.14.6",
-    "io.circe" %% "circe-parser"                 % "0.14.6",
-    "io.circe" %% "circe-literal"                % "0.14.6",
-    "io.circe" %% "circe-jawn"                   % "0.14.6",
-    //"io.circe" %% "circe-derivation"             % "0.13.0-M5",
-    //"io.circe" %% "circe-derivation-annotations" % "0.13.0-M5",
-    "io.circe" %% "circe-refined"                % "0.14.6"
+    "io.circe" %% "circe-core"                   % Versions.circe,
+    "io.circe" %% "circe-generic"                % Versions.circe,
+    "io.circe" %% "circe-parser"                 % Versions.circe,
+    "io.circe" %% "circe-literal"                % Versions.circe,
+    "io.circe" %% "circe-jawn"                   % Versions.circe,
+    "io.circe" %% "circe-refined"                % "0.15.1"
   )
 
   val mouse = Seq("org.typelevel" %% "mouse" % "1.0.11")

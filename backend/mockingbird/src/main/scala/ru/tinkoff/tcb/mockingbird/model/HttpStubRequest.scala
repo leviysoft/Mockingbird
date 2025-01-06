@@ -75,7 +75,11 @@ object HttpStubRequest {
 
   given TapirConfig = TapirConfig.default.withDiscriminator("mode").copy(toEncodedName = modes)
 
-  given CirceConfig = CirceConfig(transformConstructorNames = modes).withDiscriminator("mode")
+  given CirceConfig = CirceConfig(
+    transformConstructorNames = modes,
+    useDefaults = true,
+    discriminator = Some("mode")
+  )
 }
 
 final case class JsonRequest(
@@ -257,7 +261,11 @@ object RequestPart {
 
   given TapirConfig = TapirConfig.default.withDiscriminator("mode").copy(toEncodedName = modes)
 
-  given CirceConfig = CirceConfig(transformConstructorNames = modes).withDiscriminator("mode")
+  given CirceConfig = CirceConfig(
+    transformConstructorNames = modes,
+    useDefaults = true,
+    discriminator = Some("mode")
+  )
 }
 
 final case class AnyContentPart(headers: Map[String, String]) extends RequestPart {

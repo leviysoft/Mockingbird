@@ -39,7 +39,11 @@ object ResponseSpec {
 
   given TapirConfig = TapirConfig.default.withDiscriminator("mode").copy(toEncodedName = modes)
 
-  given CirceConfig = CirceConfig(transformConstructorNames = modes).withDiscriminator("mode")
+  given CirceConfig = CirceConfig(
+    transformConstructorNames = modes,
+    useDefaults = true,
+    discriminator = Some("mode")
+  )
 }
 
 final case class RawResponseSpec(code: Option[Int], body: Option[String]) extends ResponseSpec {

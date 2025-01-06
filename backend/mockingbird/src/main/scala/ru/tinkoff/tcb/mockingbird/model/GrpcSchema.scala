@@ -73,13 +73,17 @@ object GrpcRootMessage {
 
   given TapirConfig = TapirConfig.default.withDiscriminator("type").copy(toEncodedName = modes)
 
-  given CirceConfig = CirceConfig(transformConstructorNames = modes).withDiscriminator("type")
+  given CirceConfig = CirceConfig(
+    transformConstructorNames = modes,
+    useDefaults = true,
+    discriminator = Some("type")
+  )
 
   // These instances are defined as implicit defs due to Scala 3 derivation limitations
   implicit def bd: BsonDecoder[GrpcRootMessage] = BsonDecoder.derived
   implicit def be: BsonEncoder[GrpcRootMessage] = BsonEncoder.derived
-  implicit def enc: Encoder[GrpcRootMessage]    = Encoder.derived
-  implicit def dec: Decoder[GrpcRootMessage]    = Decoder.derived
+  implicit def enc: Encoder[GrpcRootMessage]    = Encoder.AsObject.derivedConfigured
+  implicit def dec: Decoder[GrpcRootMessage]    = Decoder.derivedConfigured
   implicit def sch: Schema[GrpcRootMessage]     = Schema.derived
 }
 
@@ -92,13 +96,17 @@ object GrpcSchema {
 
   given TapirConfig = TapirConfig.default.withDiscriminator("type").copy(toEncodedName = modes)
 
-  given CirceConfig = CirceConfig(transformConstructorNames = modes).withDiscriminator("type")
+  given CirceConfig = CirceConfig(
+    transformConstructorNames = modes,
+    useDefaults = true,
+    discriminator = Some("type")
+  )
 
   // These instances are defined as implicit defs due to Scala 3 derivation limitations
   implicit def bd: BsonDecoder[GrpcSchema] = BsonDecoder.derived
   implicit def be: BsonEncoder[GrpcSchema] = BsonEncoder.derived
-  implicit def enc: Encoder[GrpcSchema]    = Encoder.derived
-  implicit def dec: Decoder[GrpcSchema]    = Decoder.derived
+  implicit def enc: Encoder[GrpcSchema]    = Encoder.AsObject.derivedConfigured
+  implicit def dec: Decoder[GrpcSchema]    = Decoder.derivedConfigured
   implicit def sch: Schema[GrpcSchema]     = Schema.derived
 }
 
