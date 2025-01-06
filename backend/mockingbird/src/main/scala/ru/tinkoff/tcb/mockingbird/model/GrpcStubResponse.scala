@@ -12,6 +12,8 @@ import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.Json
 import io.circe.derivation.Configuration as CirceConfig
+import io.circe.derivation.ConfiguredDecoder
+import io.circe.derivation.ConfiguredEncoder
 import io.circe.refined.*
 import oolong.bson.*
 import oolong.bson.annotation.BsonDiscriminator
@@ -28,7 +30,7 @@ import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.circe.optics.JsonOptic
 
 @BsonDiscriminator("mode")
-sealed trait GrpcStubResponse derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema {
+sealed trait GrpcStubResponse derives BsonDecoder, BsonEncoder, ConfiguredDecoder, ConfiguredEncoder, Schema {
   def delay: Option[FiniteDuration]
 }
 
@@ -41,8 +43,7 @@ object GrpcStubResponse {
     nameOfType[RepeatResponse]     -> "repeat"
   ).withDefault(identity)
 
-  implicit val customConfiguration: TapirConfig =
-    TapirConfig.default.withDiscriminator("mode").copy(toEncodedName = modes)
+  given TapirConfig = TapirConfig.default.withDiscriminator("mode").copy(toEncodedName = modes)
 
   given CirceConfig = CirceConfig(transformConstructorNames = modes).withDiscriminator("mode")
 }
@@ -51,24 +52,18 @@ final case class FillResponse(
     data: Json,
     delay: Option[FiniteDuration]
 ) extends GrpcStubResponse
-    derives Decoder,
-      Encoder
 
 final case class FillStreamResponse(
     data: Vector[Json],
     delay: Option[FiniteDuration],
     streamDelay: Option[FiniteDuration]
 ) extends GrpcStubResponse
-    derives Decoder,
-      Encoder
 
 final case class GProxyResponse(
     endpoint: Option[String],
     patch: Map[JsonOptic, String],
     delay: Option[FiniteDuration]
 ) extends GrpcStubResponse
-    derives Decoder,
-      Encoder
 
 object GProxyResponse {
   val prism: Subset[GrpcStubResponse, GProxyResponse] = GenSubset[GrpcStubResponse, GProxyResponse]
@@ -79,8 +74,6 @@ object GProxyResponse {
 final case class NoBodyResponse(
     delay: Option[FiniteDuration]
 ) extends GrpcStubResponse
-    derives Decoder,
-      Encoder
 
 final case class RepeatResponse(
     data: Json,
@@ -88,5 +81,3 @@ final case class RepeatResponse(
     delay: Option[FiniteDuration],
     streamDelay: Option[FiniteDuration]
 ) extends GrpcStubResponse
-    derives Decoder,
-      Encoder

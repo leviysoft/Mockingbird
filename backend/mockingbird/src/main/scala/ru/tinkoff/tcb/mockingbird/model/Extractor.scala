@@ -7,6 +7,8 @@ import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.Json
 import io.circe.derivation.Configuration as CirceConfig
+import io.circe.derivation.ConfiguredDecoder
+import io.circe.derivation.ConfiguredEncoder
 import io.circe.parser.parse
 import oolong.bson.*
 import oolong.bson.annotation.BsonDiscriminator
@@ -20,7 +22,7 @@ import ru.tinkoff.tcb.utils.circe.optics.JsonOptic
 import ru.tinkoff.tcb.xpath.SXpath
 
 @BsonDiscriminator("type")
-sealed trait XmlExtractor derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema {
+sealed trait XmlExtractor derives BsonDecoder, BsonEncoder, ConfiguredDecoder, ConfiguredEncoder, Schema {
   def apply(node: NodeSeq): Option[Json]
 }
 object XmlExtractor {
@@ -28,8 +30,7 @@ object XmlExtractor {
     nameOfType[JsonCDataExtractor] -> "jcdata",
   ).withDefault(identity)
 
-  implicit val customConfiguration: TapirConfig =
-    TapirConfig.default.withDiscriminator("type").copy(toEncodedName = types)
+  given TapirConfig = TapirConfig.default.withDiscriminator("type").copy(toEncodedName = types)
 
   given CirceConfig = CirceConfig(transformConstructorNames = types).withDiscriminator("type")
 }
@@ -40,7 +41,7 @@ object XmlExtractor {
  * @param path
  *   Path inside CDATA
  */
-final case class JsonCDataExtractor(prefix: SXpath, path: JsonOptic) extends XmlExtractor derives Decoder, Encoder {
+final case class JsonCDataExtractor(prefix: SXpath, path: JsonOptic) extends XmlExtractor {
   def apply(node: NodeSeq): Option[Json] =
     prefix.toZoom
       .bind(node)

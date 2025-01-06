@@ -8,6 +8,8 @@ import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.Json
 import io.circe.derivation.Configuration as CirceConfig
+import io.circe.derivation.ConfiguredDecoder
+import io.circe.derivation.ConfiguredEncoder
 import io.circe.refined.*
 import neotype.*
 import oolong.bson.*
@@ -24,7 +26,7 @@ import ru.tinkoff.tcb.protocol.schema.*
 import ru.tinkoff.tcb.utils.xml.XMLString
 
 @BsonDiscriminator("mode")
-sealed trait CallbackRequest derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema {
+sealed trait CallbackRequest derives BsonDecoder, BsonEncoder, ConfiguredDecoder, ConfiguredEncoder, Schema {
   def url: NonEmptyString
   def method: HttpMethod
   def headers: Map[String, String]
@@ -38,8 +40,7 @@ object CallbackRequest {
     nameOfType[XMLCallbackRequest]         -> "xml"
   ).withDefault(identity)
 
-  implicit val customConfiguration: TapirConfig =
-    TapirConfig.default.withDiscriminator("mode").copy(toEncodedName = modes)
+  given TapirConfig = TapirConfig.default.withDiscriminator("mode").copy(toEncodedName = modes)
 
   given CirceConfig = CirceConfig(transformConstructorNames = modes).withDiscriminator("mode")
 }
@@ -49,8 +50,6 @@ final case class CallbackRequestWithoutBody(
     method: HttpMethod,
     headers: Map[String, String]
 ) extends CallbackRequest
-    derives Decoder,
-      Encoder
 
 final case class RawCallbackRequest(
     url: NonEmptyString,
@@ -58,8 +57,6 @@ final case class RawCallbackRequest(
     headers: Map[String, String],
     body: String
 ) extends CallbackRequest
-    derives Decoder,
-      Encoder
 
 final case class JsonCallbackRequest(
     url: NonEmptyString,
@@ -67,16 +64,12 @@ final case class JsonCallbackRequest(
     headers: Map[String, String],
     body: Json
 ) extends CallbackRequest
-    derives Decoder,
-      Encoder
 
 final case class XMLCallbackRequest(
     url: NonEmptyString,
     method: HttpMethod,
     headers: Map[String, String],
     body: XMLString.Type
-) extends CallbackRequest
-    derives Decoder,
-      Encoder {
+) extends CallbackRequest {
   lazy val node: Node = body.unwrap
 }

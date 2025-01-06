@@ -13,6 +13,8 @@ import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.Json
 import io.circe.derivation.Configuration as CirceConfig
+import io.circe.derivation.ConfiguredDecoder
+import io.circe.derivation.ConfiguredEncoder
 import io.circe.refined.*
 import neotype.*
 import oolong.bson.*
@@ -34,7 +36,7 @@ import ru.tinkoff.tcb.utils.xml.XMLString
 import ru.tinkoff.tcb.xpath.SXpath
 
 @BsonDiscriminator("mode")
-sealed trait HttpStubResponse derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema {
+sealed trait HttpStubResponse derives BsonDecoder, BsonEncoder, ConfiguredDecoder, ConfiguredEncoder, Schema {
   def delay: Option[FiniteDuration]
   def isTemplate: Boolean
 }
@@ -51,8 +53,7 @@ object HttpStubResponse {
     nameOfType[XmlProxyResponse]  -> "xml-proxy"
   ).withDefault(identity)
 
-  implicit val customConfiguration: TapirConfig =
-    TapirConfig.default.withDiscriminator("mode").copy(toEncodedName = modes)
+  given TapirConfig = TapirConfig.default.withDiscriminator("mode").copy(toEncodedName = modes)
 
   given CirceConfig = CirceConfig(transformConstructorNames = modes).withDiscriminator("mode")
 
@@ -74,9 +75,7 @@ final case class EmptyResponse(
     code: HttpStatusCode,
     headers: Map[String, String],
     delay: Option[FiniteDuration]
-) extends HttpStubResponse
-    derives Decoder,
-      Encoder {
+) extends HttpStubResponse {
   val isTemplate: Boolean = false
 }
 
@@ -91,9 +90,7 @@ final case class RawResponse(
     headers: Map[String, String],
     body: String,
     delay: Option[FiniteDuration]
-) extends HttpStubResponse
-    derives Decoder,
-      Encoder {
+) extends HttpStubResponse {
   val isTemplate: Boolean = false
 }
 
@@ -178,9 +175,7 @@ final case class BinaryResponse(
     headers: Map[String, String],
     body: ByteArray.Type,
     delay: Option[FiniteDuration]
-) extends HttpStubResponse
-    derives Decoder,
-      Encoder {
+) extends HttpStubResponse {
   val isTemplate: Boolean = false
 }
 
@@ -194,9 +189,7 @@ final case class ProxyResponse(
     uri: String,
     delay: Option[FiniteDuration],
     timeout: Option[FiniteDuration]
-) extends HttpStubResponse
-    derives Decoder,
-      Encoder {
+) extends HttpStubResponse {
   val isTemplate: Boolean = false
 }
 
@@ -205,9 +198,7 @@ final case class JsonProxyResponse(
     patch: Map[JsonOptic, String],
     delay: Option[FiniteDuration],
     timeout: Option[FiniteDuration]
-) extends HttpStubResponse
-    derives Decoder,
-      Encoder {
+) extends HttpStubResponse {
   val isTemplate: Boolean = false
 }
 
@@ -216,9 +207,7 @@ final case class XmlProxyResponse(
     patch: Map[SXpath, String],
     delay: Option[FiniteDuration],
     timeout: Option[FiniteDuration]
-) extends HttpStubResponse
-    derives Decoder,
-      Encoder {
+) extends HttpStubResponse {
   val isTemplate: Boolean = false
 }
 

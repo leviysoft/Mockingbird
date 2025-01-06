@@ -7,6 +7,8 @@ import io.circe.Decoder
 import io.circe.Encoder
 import io.circe.Json
 import io.circe.derivation.Configuration as CirceConfig
+import io.circe.derivation.ConfiguredDecoder
+import io.circe.derivation.ConfiguredEncoder
 import neotype.*
 import oolong.bson.*
 import oolong.bson.annotation.BsonDiscriminator
@@ -22,7 +24,7 @@ import ru.tinkoff.tcb.utils.transformation.xml.XmlTransformation
 import ru.tinkoff.tcb.utils.xml.XMLString
 
 @BsonDiscriminator("mode")
-sealed trait ScenarioOutput derives BsonDecoder, BsonEncoder, Decoder, Encoder, Schema {
+sealed trait ScenarioOutput derives BsonDecoder, BsonEncoder, ConfiguredDecoder, ConfiguredEncoder, Schema {
   def delay: Option[FiniteDuration]
   def isTemplate: Boolean
 }
@@ -34,8 +36,7 @@ object ScenarioOutput {
     nameOfType[XmlOutput]  -> "xml"
   ).withDefault(identity)
 
-  implicit val customConfiguration: TapirConfig =
-    TapirConfig.default.withDiscriminator("mode").copy(toEncodedName = modes)
+  given TapirConfig = TapirConfig.default.withDiscriminator("mode").copy(toEncodedName = modes)
 
   given CirceConfig = CirceConfig(transformConstructorNames = modes).withDiscriminator("mode")
 }
@@ -43,9 +44,7 @@ object ScenarioOutput {
 final case class RawOutput(
     payload: String,
     delay: Option[FiniteDuration]
-) extends ScenarioOutput
-    derives Encoder,
-      Decoder {
+) extends ScenarioOutput {
   val isTemplate = false
 }
 
